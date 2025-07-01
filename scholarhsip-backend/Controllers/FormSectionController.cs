@@ -1,31 +1,26 @@
-﻿// Controllers/FormSectionController.cs
-using FinalProject.BL.Services;
+﻿using FinalProject.BL.Services;
 using FinalProject.DAL.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Threading.Tasks;
 
 namespace FinalProject.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class FormSectionController : ControllerBase
     {
         private readonly FormService _formService;
-        private readonly SectionPermissionService _permissionService;
-        private readonly AuditTrailService _auditTrailService;
 
         public FormSectionController(IConfiguration configuration)
         {
             _formService = new FormService(configuration);
-            _permissionService = new SectionPermissionService(configuration);
-            _auditTrailService = new AuditTrailService(configuration);
         }
 
         /// <summary>
-        /// Returns all sections for a given form. (Open to anonymous)
+        /// קבלת סעיפים של טופס - לכולם (אבל רק טפסים מפורסמים למשתמשים רגילים)
         /// </summary>
         [HttpGet("form/{formId}")]
         [AllowAnonymous]
@@ -33,7 +28,17 @@ namespace FinalProject.Controllers
         {
             try
             {
-                // Simply return the hierarchy for that form
+                var form = _formService.GetFormById(formId);
+                if (form == null)
+                    return NotFound($"Form with ID {formId} not found");
+
+                var currentUserId = User.Identity?.Name;
+                var isAdmin = !string.IsNullOrEmpty(currentUserId) && User.IsInRole("מנהל סטודנטים");
+
+                // בדיקת הרשאות - רק מפורסמים למשתמשים רגילים
+                if (!isAdmin && (!form.IsPublished || !form.IsActive))
+                    return Forbid("This form is not available");
+
                 var sections = _formService.GetFormStructure(formId);
                 return Ok(sections);
             }
@@ -44,7 +49,7 @@ namespace FinalProject.Controllers
         }
 
         /// <summary>
-        /// Returns all fields for a given section. (Open to anonymous)
+        /// קבלת שדות של סעיף - לכולם
         /// </summary>
         [HttpGet("{id}/fields")]
         [AllowAnonymous]
@@ -52,6 +57,18 @@ namespace FinalProject.Controllers
         {
             try
             {
+                var section = _formService.GetSectionById(id);
+                if (section == null)
+                    return NotFound($"Section with ID {id} not found");
+
+                var form = _formService.GetFormById(section.FormId);
+                var currentUserId = User.Identity?.Name;
+                var isAdmin = !string.IsNullOrEmpty(currentUserId) && User.IsInRole("מנהל סטודנטים");
+
+                // בדיקת הרשאות
+                if (!isAdmin && (!form.IsPublished || !form.IsActive))
+                    return Forbid("This section is not available");
+
                 var fields = _formService.GetSectionFields(id);
                 return Ok(fields);
             }
@@ -62,41 +79,11 @@ namespace FinalProject.Controllers
         }
 
         /// <summary>
-        /// Returns a single section by ID, with permission checks.
-        /// </summary>
-        [HttpGet("{id}")]
-        public IActionResult GetSectionById(int id)
-        {
-            try
-            {
-                var currentUserId = User.Identity.Name;
-                var isAdmin = User.IsInRole("Admin");
-                var isCommitteeMember = User.IsInRole("CommitteeMember");
-
-                var section = _formService.GetSectionById(id);
-                if (section == null)
-                    return NotFound($"Section with ID {id} not found");
-
-                if (!isAdmin
-                    && !isCommitteeMember
-                    && !_permissionService.CanViewSection(currentUserId, id))
-                {
-                    return Forbid();
-                }
-
-                return Ok(section);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Creates a new section under a form.
+        /// יצירת סעיף חדש - רק מנהל סטודנטים
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> CreateSection([FromBody] FormSection section)
+        [Authorize(Roles = "מנהל סטודנטים")]
+        public IActionResult CreateSection([FromBody] FormSection section)
         {
             try
             {
@@ -106,21 +93,14 @@ namespace FinalProject.Controllers
                 var form = _formService.GetFormById(section.FormId);
                 if (form == null)
                     return NotFound($"Form with ID {section.FormId} not found");
-                //if (form.IsPublished)
-                //    return BadRequest("Cannot add sections to a published form");
+
+                // אם הטופס כבר מפורסם, לא ניתן להוסיף סעיפים
+                if (form.IsPublished)
+                    return BadRequest("Cannot add sections to a published form");
 
                 var sectionId = _formService.AddSection(section);
                 if (sectionId > 0)
                 {
-                    var currentUserId = User.Identity.Name;
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "Create",
-                        "FormSection",
-                        sectionId,
-                        $"Created new section: {section.Title} for form {section.FormId}"
-                    );
-
                     section.SectionID = sectionId;
                     return CreatedAtAction(nameof(GetSectionById), new { id = sectionId }, section);
                 }
@@ -134,10 +114,11 @@ namespace FinalProject.Controllers
         }
 
         /// <summary>
-        /// Updates an existing section.
+        /// עדכון סעיף - רק מנהל סטודנטים
         /// </summary>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateSection(int id, [FromBody] FormSection section)
+        [Authorize(Roles = "מנהל סטודנטים")]
+        public IActionResult UpdateSection(int id, [FromBody] FormSection section)
         {
             try
             {
@@ -151,23 +132,12 @@ namespace FinalProject.Controllers
                     return NotFound($"Section with ID {id} not found");
 
                 var form = _formService.GetFormById(existingSection.FormId);
-                if (form == null)
-                    return NotFound($"Form with ID {existingSection.FormId} not found");
-                //if (form.IsPublished)
-                //    return BadRequest("Cannot update sections in a published form");
+                if (form.IsPublished)
+                    return BadRequest("Cannot update sections in a published form");
 
                 var result = _formService.UpdateSection(section);
                 if (result > 0)
                 {
-                    var currentUserId = User.Identity.Name;
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "Update",
-                        "FormSection",
-                        id,
-                        $"Updated section: {section.Title}"
-                    );
-
                     return Ok(section);
                 }
 
@@ -180,10 +150,11 @@ namespace FinalProject.Controllers
         }
 
         /// <summary>
-        /// Deletes a section by ID.
+        /// מחיקת סעיף - רק מנהל סטודנטים
         /// </summary>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteSection(int id)
+        [Authorize(Roles = "מנהל סטודנטים")]
+        public IActionResult DeleteSection(int id)
         {
             try
             {
@@ -192,23 +163,12 @@ namespace FinalProject.Controllers
                     return NotFound($"Section with ID {id} not found");
 
                 var form = _formService.GetFormById(section.FormId);
-                if (form == null)
-                    return NotFound($"Form with ID {section.FormId} not found");
                 if (form.IsPublished)
                     return BadRequest("Cannot delete sections from a published form");
 
                 var result = _formService.DeleteSection(id);
                 if (result > 0)
                 {
-                    var currentUserId = User.Identity.Name;
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "Delete",
-                        "FormSection",
-                        id,
-                        $"Deleted section: {section.Title}"
-                    );
-
                     return Ok(new { Message = "Section deleted successfully" });
                 }
 
@@ -220,66 +180,16 @@ namespace FinalProject.Controllers
             }
         }
 
-        /// <summary>
-        /// Assigns a permission to this section.
-        /// </summary>
-        [HttpPost("{id}/permissions")]
-        public async Task<IActionResult> AssignSectionPermission(int id, [FromBody] SectionPermission permission)
+        [HttpGet("{id}")]
+        public IActionResult GetSectionById(int id)
         {
             try
             {
-                if (permission == null)
-                    return BadRequest("Permission data is null");
-                if (id != permission.SectionID)
-                    return BadRequest("Section ID mismatch");
+                var section = _formService.GetSectionById(id);
+                if (section == null)
+                    return NotFound($"Section with ID {id} not found");
 
-                var result = _permissionService.AssignPermission(permission);
-                if (result > 0)
-                {
-                    var currentUserId = User.Identity.Name;
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "AssignPermission",
-                        "FormSection",
-                        id,
-                        $"Assigned permission to section for person {permission.ResponsiblePerson}"
-                    );
-
-                    return Ok(permission);
-                }
-
-                return BadRequest("Failed to assign permission");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Removes a previously assigned permission.
-        /// </summary>
-        [HttpDelete("permissions/{permissionId}")]
-        public async Task<IActionResult> RemoveSectionPermission(int permissionId)
-        {
-            try
-            {
-                var result = _permissionService.RemovePermission(permissionId);
-                if (result > 0)
-                {
-                    var currentUserId = User.Identity.Name;
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "RemovePermission",
-                        "SectionPermission",
-                        permissionId,
-                        $"Removed section permission"
-                    );
-
-                    return Ok(new { Message = "Permission removed successfully" });
-                }
-
-                return BadRequest("Failed to remove permission");
+                return Ok(section);
             }
             catch (Exception ex)
             {

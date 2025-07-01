@@ -4,46 +4,229 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Threading.Tasks;
 
 namespace FinalProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class FormInstanceController : ControllerBase
     {
         private readonly FormInstanceService _instanceService;
         private readonly FormService _formService;
-        private readonly FormValidationService _validationService;
-        private readonly NotificationService _notificationService;
-        private readonly AuditTrailService _auditTrailService;
+        private readonly PersonService _personService;
+        private readonly DepartmentService _departmentService;
 
         public FormInstanceController(IConfiguration configuration)
         {
             _instanceService = new FormInstanceService(configuration);
             _formService = new FormService(configuration);
-            _validationService = new FormValidationService(configuration);
-            _notificationService = new NotificationService(configuration);
-            _auditTrailService = new AuditTrailService(configuration);
+            _personService = new PersonService(configuration);
+            _departmentService = new DepartmentService(configuration);
         }
 
+        /// <summary>
+        /// קבלת מופעי טפסים של משתמש - רק המשתמש עצמו או מי שמורשה לראות
+        /// </summary>
         [HttpGet("user/{userId}")]
         public IActionResult GetUserInstances(string userId)
         {
             try
             {
-                var currentUserId = User.Identity.Name;
-                var isAdmin = User.IsInRole("Admin");
-                var isFacultyHead = User.IsInRole("FacultyHead");
-                var isCommitteeMember = User.IsInRole("CommitteeMember");
+                var currentUserId = User.Identity?.Name;
 
-                // בדיקת הרשאות - משתמש רגיל יכול לראות רק את המופעים שלו
-                if (currentUserId != userId && !isAdmin && !isFacultyHead && !isCommitteeMember)
-                    return Forbid();
+                // בדיקת הרשאות
+                if (!CanUserViewInstances(currentUserId, userId))
+                    return Forbid("Not authorized to view these instances");
 
                 var instances = _instanceService.GetUserInstances(userId);
                 return Ok(instances);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// יצירת מופע טופס חדש - כל המרצים
+        /// </summary>
+        [HttpPost("form/{formId}")]
+        [Authorize(Roles = "מרצה,ראש התמחות,ראש מחלקה,דיקאן")]
+        public IActionResult CreateInstance(int formId)
+        {
+            try
+            {
+                var currentUserId = User.Identity?.Name;
+
+                var form = _formService.GetFormById(formId);
+                if (form == null)
+                    return NotFound($"Form with ID {formId} not found");
+
+                if (!form.IsPublished || !form.IsActive)
+                    return BadRequest("Cannot create instance for unpublished or inactive form");
+
+                var instanceId = _instanceService.CreateInstance(currentUserId, formId);
+                if (instanceId > 0)
+                {
+                    var instance = _instanceService.GetInstanceById(instanceId);
+                    return CreatedAtAction(nameof(GetInstanceById), new { id = instanceId }, instance);
+                }
+                else
+                {
+                    return BadRequest("Failed to create instance");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// הגשת מופע טופס - רק בעל המופע
+        /// </summary>
+        [HttpPost("{id}/submit")]
+        public IActionResult SubmitInstance(int id, [FromBody] SubmitInstanceModel model)
+        {
+            try
+            {
+                var instance = _instanceService.GetInstanceById(id);
+                if (instance == null)
+                    return NotFound($"Instance with ID {id} not found");
+
+                var currentUserId = User.Identity?.Name;
+                if (currentUserId != instance.UserID)
+                    return Forbid("Can only submit your own instances");
+
+                var comments = model?.Comments;
+                var result = _instanceService.SubmitInstance(id, comments);
+                if (result > 0)
+                {
+                    return Ok(new { Message = "Instance submitted successfully" });
+                }
+                else
+                {
+                    return BadRequest("Failed to submit instance");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// קבלת טפסים לבדיקה - לפי הרשאות
+        /// </summary>
+        [HttpGet("for-review")]
+        [Authorize(Roles = "ראש מחלקה,דיקאן,מנהל סטודנטים")]
+        public IActionResult GetInstancesForReview()
+        {
+            try
+            {
+                var currentUserId = User.Identity?.Name;
+                var currentUser = _personService.GetPersonById(currentUserId);
+                var userRoles = _personService.GetPersonRoles(currentUserId);
+
+                // מנהל סטודנטים רואה הכל
+                if (userRoles.Any(r => r.RoleName == "מנהל סטודנטים"))
+                {
+                    var allInstances = _instanceService.GetInstancesByStage("ApprovedByDean");
+                    return Ok(allInstances);
+                }
+
+                // דיקאן רואה את הפקולטה שלו
+                if (userRoles.Any(r => r.RoleName == "דיקאן"))
+                {
+                    var department = _departmentService.GetDepartmentById(currentUser.DepartmentID.Value);
+                    var facultyInstances = GetInstancesByFaculty(department.FacultyId.Value, "ApprovedByDepartment");
+                    return Ok(facultyInstances);
+                }
+
+                // ראש מחלקה רואה את המחלקה שלו
+                if (userRoles.Any(r => r.RoleName == "ראש מחלקה"))
+                {
+                    var departmentInstances = GetInstancesByDepartment(currentUser.DepartmentID.Value, "Submitted");
+                    return Ok(departmentInstances);
+                }
+
+                return Forbid("Not authorized to review instances");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// אישור מופע טופס - לפי הרשאות בהיררכיה
+        /// </summary>
+        [HttpPost("{id}/approve")]
+        [Authorize(Roles = "ראש מחלקה,דיקאן,מנהל סטודנטים")]
+        public IActionResult ApproveInstance(int id, [FromBody] ApproveInstanceModel model)
+        {
+            try
+            {
+                var instance = _instanceService.GetInstanceById(id);
+                if (instance == null)
+                    return NotFound($"Instance with ID {id} not found");
+
+                var currentUserId = User.Identity?.Name;
+
+                // בדיקת הרשאות לאישור
+                if (!CanUserApproveInstance(currentUserId, instance))
+                    return Forbid("Not authorized to approve this instance");
+
+                // קביעת הסטטוס החדש לפי התפקיד
+                string newStatus = GetNextApprovalStatus(currentUserId);
+
+                var result = UpdateInstanceStatus(id, newStatus, model?.Comments);
+                if (result > 0)
+                {
+                    return Ok(new { Message = "Instance approved successfully", NewStatus = newStatus });
+                }
+                else
+                {
+                    return BadRequest("Failed to approve instance");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// דחיית מופע טופס - לפי הרשאות
+        /// </summary>
+        [HttpPost("{id}/reject")]
+        [Authorize(Roles = "ראש מחלקה,דיקאן,מנהל סטודנטים")]
+        public IActionResult RejectInstance(int id, [FromBody] RejectInstanceModel model)
+        {
+            try
+            {
+                if (model == null || string.IsNullOrEmpty(model.Comments))
+                    return BadRequest("Comments are required for rejection");
+
+                var instance = _instanceService.GetInstanceById(id);
+                if (instance == null)
+                    return NotFound($"Instance with ID {id} not found");
+
+                var currentUserId = User.Identity?.Name;
+
+                if (!CanUserApproveInstance(currentUserId, instance))
+                    return Forbid("Not authorized to reject this instance");
+
+                var result = _instanceService.RejectInstance(id, model.Comments);
+                if (result > 0)
+                {
+                    return Ok(new { Message = "Instance rejected successfully" });
+                }
+                else
+                {
+                    return BadRequest("Failed to reject instance");
+                }
             }
             catch (Exception ex)
             {
@@ -60,14 +243,11 @@ namespace FinalProject.Controllers
                 if (instance == null)
                     return NotFound($"Instance with ID {id} not found");
 
-                var currentUserId = User.Identity.Name;
-                var isAdmin = User.IsInRole("Admin");
-                var isFacultyHead = User.IsInRole("FacultyHead");
-                var isCommitteeMember = User.IsInRole("CommitteeMember");
+                var currentUserId = User.Identity?.Name;
 
-                // בדיקת הרשאות - משתמש רגיל יכול לראות רק את המופעים שלו
-                if (currentUserId != instance.UserID && !isAdmin && !isFacultyHead && !isCommitteeMember)
-                    return Forbid();
+                // בדיקת הרשאות לצפייה
+                if (!CanUserViewInstance(currentUserId, instance))
+                    return Forbid("Not authorized to view this instance");
 
                 return Ok(instance);
             }
@@ -77,400 +257,117 @@ namespace FinalProject.Controllers
             }
         }
 
-        [HttpPost("form/{formId}")]
-        public async Task<IActionResult> CreateInstance(int formId)
+        // Helper Methods
+        private bool CanUserViewInstances(string currentUserId, string targetUserId)
         {
-            try
+            if (currentUserId == targetUserId) return true;
+
+            var userRoles = _personService.GetPersonRoles(currentUserId);
+
+            // מנהל סטודנטים רואה הכל
+            if (userRoles.Any(r => r.RoleName == "מנהל סטודנטים"))
+                return true;
+
+            // דיקאן ראש מחלקה רואים את התחום שלהם
+            if (userRoles.Any(r => r.RoleName == "דיקאן" || r.RoleName == "ראש מחלקה"))
             {
-                var currentUserId = User.Identity.Name;
+                var currentUser = _personService.GetPersonById(currentUserId);
+                var targetUser = _personService.GetPersonById(targetUserId);
 
-                // בדיקה שהטופס קיים ומפורסם
-                var form = _formService.GetFormById(formId);
-                if (form == null)
-                    return NotFound($"Form with ID {formId} not found");
-
-                if (!form.IsPublished)
-                    return BadRequest("Cannot create instance for unpublished form");
-
-                if (!form.IsActive)
-                    return BadRequest("Cannot create instance for inactive form");
-
-                var instanceId = _instanceService.CreateInstance(currentUserId, formId);
-                if (instanceId > 0)
+                if (userRoles.Any(r => r.RoleName == "דיקאן"))
                 {
-                    // לוג הפעולה
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "Create",
-                        "FormInstance",
-                        instanceId,
-                        $"Created new instance for form {formId}"
-                    );
-
-                    var instance = _instanceService.GetInstanceById(instanceId);
-                    return CreatedAtAction(nameof(GetInstanceById), new { id = instanceId }, instance);
+                    // דיקאן רואה את כל הפקולטה
+                    var currentDepartment = _departmentService.GetDepartmentById(currentUser.DepartmentID.Value);
+                    var targetDepartment = _departmentService.GetDepartmentById(targetUser.DepartmentID.Value);
+                    return currentDepartment.FacultyId == targetDepartment.FacultyId;
                 }
-                else
+
+                if (userRoles.Any(r => r.RoleName == "ראש מחלקה"))
                 {
-                    return BadRequest("Failed to create instance");
+                    // ראש מחלקה רואה רק את המחלקה שלו
+                    return currentUser.DepartmentID == targetUser.DepartmentID;
                 }
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+
+            return false;
         }
 
-        [HttpPost("{id}/submit")]
-        public async Task<IActionResult> SubmitInstance(int id, [FromBody] SubmitInstanceModel model)
+        private bool CanUserViewInstance(string currentUserId, FormInstance instance)
         {
-            try
-            {
-                var instance = _instanceService.GetInstanceById(id);
-                if (instance == null)
-                    return NotFound($"Instance with ID {id} not found");
-
-                var currentUserId = User.Identity.Name;
-
-                // בדיקת הרשאות - רק המשתמש שיצר את המופע יכול להגיש אותו
-                if (currentUserId != instance.UserID)
-                    return Forbid();
-
-                // בדיקת תקינות המופע לפני הגשה
-                var validationErrors = _validationService.ValidateFormInstance(id);
-                if (validationErrors.Count > 0)
-                    return BadRequest(validationErrors);
-
-                var comments = model?.Comments;
-                var result = _instanceService.SubmitInstance(id, comments);
-                if (result > 0)
-                {
-                    // לוג הפעולה
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "Submit",
-                        "FormInstance",
-                        id,
-                        $"Submitted instance {id}"
-                    );
-
-                    // שליחת התראה
-                    await _notificationService.SendFormSubmissionNotificationAsync(id);
-
-                    return Ok(new { Message = "Instance submitted successfully" });
-                }
-                else
-                {
-                    return BadRequest("Failed to submit instance");
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            return CanUserViewInstances(currentUserId, instance.UserID);
         }
 
-        [HttpPost("{id}/approve")]
-        [Authorize(Roles = "Admin,FacultyHead,CommitteeMember")]
-        public async Task<IActionResult> ApproveInstance(int id, [FromBody] ApproveInstanceModel model)
+        private bool CanUserApproveInstance(string currentUserId, FormInstance instance)
         {
-            try
+            var userRoles = _personService.GetPersonRoles(currentUserId);
+            var currentUser = _personService.GetPersonById(currentUserId);
+            var instanceUser = _personService.GetPersonById(instance.UserID);
+
+            // מנהל סטודנטים יכול לאשר הכל
+            if (userRoles.Any(r => r.RoleName == "מנהל סטודנטים"))
+                return instance.CurrentStage == "ApprovedByDean";
+
+            // דיקאן יכול לאשר בפקולטה שלו
+            if (userRoles.Any(r => r.RoleName == "דיקאן"))
             {
-                if (model == null || !model.TotalScore.HasValue)
-                    return BadRequest("Total score is required");
-
-                var instance = _instanceService.GetInstanceById(id);
-                if (instance == null)
-                    return NotFound($"Instance with ID {id} not found");
-
-                var oldStatus = instance.CurrentStage;
-                var result = _instanceService.ApproveInstance(id, model.TotalScore.Value, model.Comments);
-                if (result > 0)
-                {
-                    // לוג הפעולה
-                    var currentUserId = User.Identity.Name;
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "Approve",
-                        "FormInstance",
-                        id,
-                        $"Approved instance {id} with score {model.TotalScore}"
-                    );
-
-                    // שליחת התראה
-                    await _notificationService.SendStatusChangeNotificationAsync(id, oldStatus, "Approved");
-
-                    return Ok(new { Message = "Instance approved successfully" });
-                }
-                else
-                {
-                    return BadRequest("Failed to approve instance");
-                }
+                var currentDepartment = _departmentService.GetDepartmentById(currentUser.DepartmentID.Value);
+                var instanceDepartment = _departmentService.GetDepartmentById(instanceUser.DepartmentID.Value);
+                return currentDepartment.FacultyId == instanceDepartment.FacultyId &&
+                       instance.CurrentStage == "ApprovedByDepartment";
             }
-            catch (Exception ex)
+
+            // ראש מחלקה יכול לאשר במחלקה שלו
+            if (userRoles.Any(r => r.RoleName == "ראש מחלקה"))
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return currentUser.DepartmentID == instanceUser.DepartmentID &&
+                       instance.CurrentStage == "Submitted";
             }
+
+            return false;
         }
 
-        [HttpPost("{id}/reject")]
-        [Authorize(Roles = "Admin,FacultyHead,CommitteeMember")]
-        public async Task<IActionResult> RejectInstance(int id, [FromBody] RejectInstanceModel model)
+        private string GetNextApprovalStatus(string userId)
         {
-            try
-            {
-                if (model == null || string.IsNullOrEmpty(model.Comments))
-                    return BadRequest("Comments are required for rejection");
+            var userRoles = _personService.GetPersonRoles(userId);
 
-                var instance = _instanceService.GetInstanceById(id);
-                if (instance == null)
-                    return NotFound($"Instance with ID {id} not found");
+            if (userRoles.Any(r => r.RoleName == "מנהל סטודנטים"))
+                return "FinalApproved";
+            if (userRoles.Any(r => r.RoleName == "דיקאן"))
+                return "ApprovedByDean";
+            if (userRoles.Any(r => r.RoleName == "ראש מחלקה"))
+                return "ApprovedByDepartment";
 
-                var oldStatus = instance.CurrentStage;
-                var result = _instanceService.RejectInstance(id, model.Comments);
-                if (result > 0)
-                {
-                    // לוג הפעולה
-                    var currentUserId = User.Identity.Name;
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "Reject",
-                        "FormInstance",
-                        id,
-                        $"Rejected instance {id}"
-                    );
-
-                    // שליחת התראה
-                    await _notificationService.SendStatusChangeNotificationAsync(id, oldStatus, "Rejected");
-
-                    return Ok(new { Message = "Instance rejected successfully" });
-                }
-                else
-                {
-                    return BadRequest("Failed to reject instance");
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            return "Submitted";
         }
 
-        [HttpPost("{id}/return")]
-        [Authorize(Roles = "Admin,FacultyHead,CommitteeMember")]
-        public async Task<IActionResult> ReturnForRevision(int id, [FromBody] ReturnInstanceModel model)
+        private int UpdateInstanceStatus(int instanceId, string status, string comments)
         {
-            try
-            {
-                if (model == null || string.IsNullOrEmpty(model.Comments))
-                    return BadRequest("Comments are required for return");
-
-                var instance = _instanceService.GetInstanceById(id);
-                if (instance == null)
-                    return NotFound($"Instance with ID {id} not found");
-
-                var oldStatus = instance.CurrentStage;
-                var result = _instanceService.ReturnForRevision(id, model.Comments);
-                if (result > 0)
-                {
-                    // לוג הפעולה
-                    var currentUserId = User.Identity.Name;
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "ReturnForRevision",
-                        "FormInstance",
-                        id,
-                        $"Returned instance {id} for revision"
-                    );
-
-                    // שליחת התראה
-                    await _notificationService.SendStatusChangeNotificationAsync(id, oldStatus, "ReturnedForRevision");
-
-                    return Ok(new { Message = "Instance returned for revision successfully" });
-                }
-                else
-                {
-                    return BadRequest("Failed to return instance for revision");
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            return _instanceService.UpdateInstanceStatus(instanceId, status, comments);
         }
 
-        [HttpPost("{id}/review")]
-        [Authorize(Roles = "Admin,FacultyHead,CommitteeMember")]
-        public async Task<IActionResult> MarkAsUnderReview(int id, [FromBody] ReviewInstanceModel model)
+        private List<FormInstance> GetInstancesByDepartment(int departmentId, string status)
         {
-            try
-            {
-                var instance = _instanceService.GetInstanceById(id);
-                if (instance == null)
-                    return NotFound($"Instance with ID {id} not found");
-
-                var oldStatus = instance.CurrentStage;
-                var comments = model?.Comments;
-                var result = _instanceService.MarkAsUnderReview(id, comments);
-                if (result > 0)
-                {
-                    // לוג הפעולה
-                    var currentUserId = User.Identity.Name;
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "MarkAsUnderReview",
-                        "FormInstance",
-                        id,
-                        $"Marked instance {id} as under review"
-                    );
-
-                    // שליחת התראה
-                    await _notificationService.SendStatusChangeNotificationAsync(id, oldStatus, "UnderReview");
-
-                    return Ok(new { Message = "Instance marked as under review successfully" });
-                }
-                else
-                {
-                    return BadRequest("Failed to mark instance as under review");
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            // צריך להוסיף מתודה זו ל-FormInstanceService
+            return _instanceService.GetInstancesByStage(status)
+                .Where(i => {
+                    var user = _personService.GetPersonById(i.UserID);
+                    return user.DepartmentID == departmentId;
+                }).ToList();
         }
 
-        [HttpPost("{id}/appeal")]
-        public async Task<IActionResult> AppealInstance(int id, [FromBody] AppealInstanceModel model)
+        private List<FormInstance> GetInstancesByFaculty(int facultyId, string status)
         {
-            try
-            {
-                if (model == null || string.IsNullOrEmpty(model.AppealReason))
-                    return BadRequest("Appeal reason is required");
-
-                var instance = _instanceService.GetInstanceById(id);
-                if (instance == null)
-                    return NotFound($"Instance with ID {id} not found");
-
-                var currentUserId = User.Identity.Name;
-
-                // בדיקת הרשאות - רק המשתמש שיצר את המופע יכול לערער עליו
-                if (currentUserId != instance.UserID)
-                    return Forbid();
-
-                var oldStatus = instance.CurrentStage;
-                var result = _instanceService.AppealInstance(id, model.AppealReason);
-                if (result > 0)
-                {
-                    // לוג הפעולה
-                    await _auditTrailService.LogActionAsync(
-                        currentUserId,
-                        "Appeal",
-                        "FormInstance",
-                        id,
-                        $"Appealed instance {id}"
-                    );
-
-                    // שליחת התראה
-                    await _notificationService.SendStatusChangeNotificationAsync(id, oldStatus, "UnderAppeal");
-
-                    return Ok(new { Message = "Instance appealed successfully" });
-                }
-                else
-                {
-                    return BadRequest("Failed to appeal instance");
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpGet("form/{formId}")]
-        [Authorize(Roles = "Admin,FacultyHead,CommitteeMember")]
-        public IActionResult GetInstancesByFormId(int formId)
-        {
-            try
-            {
-                // בדיקה שהטופס קיים
-                var form = _formService.GetFormById(formId);
-                if (form == null)
-                    return NotFound($"Form with ID {formId} not found");
-
-                var instances = _instanceService.GetInstancesByFormId(formId);
-                return Ok(instances);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpGet("stage/{stage}")]
-        [Authorize(Roles = "Admin,FacultyHead,CommitteeMember")]
-        public IActionResult GetInstancesByStage(string stage)
-        {
-            try
-            {
-                var instances = _instanceService.GetInstancesByStage(stage);
-                return Ok(instances);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpGet("form/{formId}/stats")]
-        [Authorize(Roles = "Admin,FacultyHead,CommitteeMember")]
-        public IActionResult GetInstancesStatisticsByForm(int formId)
-        {
-            try
-            {
-                // בדיקה שהטופס קיים
-                var form = _formService.GetFormById(formId);
-                if (form == null)
-                    return NotFound($"Form with ID {formId} not found");
-
-                var stats = _instanceService.GetInstancesStatisticsByForm(formId);
-                return Ok(stats);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpGet("{id}/validate")]
-        public IActionResult ValidateInstance(int id)
-        {
-            try
-            {
-                var instance = _instanceService.GetInstanceById(id);
-                if (instance == null)
-                    return NotFound($"Instance with ID {id} not found");
-
-                var currentUserId = User.Identity.Name;
-
-                // בדיקת הרשאות - רק המשתמש שיצר את המופע או בעל תפקיד מתאים יכול לבדוק אותו
-                var isAdmin = User.IsInRole("Admin");
-                var isFacultyHead = User.IsInRole("FacultyHead");
-                var isCommitteeMember = User.IsInRole("CommitteeMember");
-
-                if (currentUserId != instance.UserID && !isAdmin && !isFacultyHead && !isCommitteeMember)
-                    return Forbid();
-
-                var validationErrors = _validationService.ValidateFormInstance(id);
-                return Ok(new { IsValid = validationErrors.Count == 0, Errors = validationErrors });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            // צריך להוסיף מתודה זו ל-FormInstanceService
+            return _instanceService.GetInstancesByStage(status)
+                .Where(i => {
+                    var user = _personService.GetPersonById(i.UserID);
+                    var department = _departmentService.GetDepartmentById(user.DepartmentID.Value);
+                    return department.FacultyId == facultyId;
+                }).ToList();
         }
     }
 
+    // Request Models
     public class SubmitInstanceModel
     {
         public string Comments { get; set; }
@@ -478,27 +375,11 @@ namespace FinalProject.Controllers
 
     public class ApproveInstanceModel
     {
-        public decimal? TotalScore { get; set; }
         public string Comments { get; set; }
     }
 
     public class RejectInstanceModel
     {
         public string Comments { get; set; }
-    }
-
-    public class ReturnInstanceModel
-    {
-        public string Comments { get; set; }
-    }
-
-    public class ReviewInstanceModel
-    {
-        public string Comments { get; set; }
-    }
-
-    public class AppealInstanceModel
-    {
-        public string AppealReason { get; set; }
     }
 }

@@ -1,31 +1,41 @@
 ﻿using FinalProject.BL.Services;
 using FinalProject.DAL.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Threading.Tasks;
 
 namespace FinalProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PersonController : ControllerBase
     {
         private readonly PersonService _personService;
-        private readonly AuditTrailService _auditTrailService;
 
         public PersonController(IConfiguration configuration)
         {
             _personService = new PersonService(configuration);
-            _auditTrailService = new AuditTrailService(configuration);
         }
 
+        /// <summary>
+        /// קבלת כל המשתמשים - רק מנהל סטודנטים
+        /// </summary>
         [HttpGet]
+        [Authorize(Roles = "מנהל סטודנטים")]
         public IActionResult GetAllPersons()
         {
             try
             {
                 var persons = _personService.GetAllPersons();
+
+                // הסרת סיסמאות מהתשובה
+                foreach (var person in persons)
+                {
+                    person.Password = null;
+                }
+
                 return Ok(persons);
             }
             catch (Exception ex)
@@ -34,6 +44,9 @@ namespace FinalProject.Controllers
             }
         }
 
+        /// <summary>
+        /// קבלת משתמש לפי מזהה - המשתמש עצמו או מי שמורשה
+        /// </summary>
         [HttpGet("{id}")]
         public IActionResult GetPersonById(string id)
         {
@@ -43,7 +56,16 @@ namespace FinalProject.Controllers
                 if (person == null)
                     return NotFound($"Person with ID {id} not found");
 
-                // להסרת בדיקת הרשאות – מאפשר צפייה לכל אחד
+                var currentUserId = User.Identity?.Name;
+                var isAdmin = User.IsInRole("מנהל סטודנטים");
+
+                // רק המשתמש עצמו או מנהל יכול לראות פרטים אישיים
+                if (currentUserId != id && !isAdmin)
+                    return Forbid("Not authorized to view this person's details");
+
+                // הסרת סיסמה מהתשובה
+                person.Password = null;
+
                 return Ok(person);
             }
             catch (Exception ex)
@@ -52,8 +74,12 @@ namespace FinalProject.Controllers
             }
         }
 
+        /// <summary>
+        /// הוספת משתמש חדש - רק מנהל סטודנטים
+        /// </summary>
         [HttpPost]
-        public async Task<IActionResult> AddPerson([FromBody] Person person)
+        [Authorize(Roles = "מנהל סטודנטים")]
+        public IActionResult AddPerson([FromBody] Person person)
         {
             try
             {
@@ -63,15 +89,8 @@ namespace FinalProject.Controllers
                 var result = _personService.AddPerson(person);
                 if (result > 0)
                 {
-                    // עבור בדיקות – מסמנים את המשתמש כ-"Anonymous"
-                    //await _auditTrailService.LogActionAsync(
-                    //    "Anonymous",
-                    //    "Create",
-                    //    "Person",
-                    //    int.Parse(person.PersonId),
-                    //    $"Created new person: {person.FirstName} {person.LastName}"
-                    //);
-
+                    // הסרת סיסמה מהתשובה
+                    person.Password = null;
                     return CreatedAtAction(nameof(GetPersonById), new { id = person.PersonId }, person);
                 }
                 else
@@ -85,14 +104,16 @@ namespace FinalProject.Controllers
             }
         }
 
+        /// <summary>
+        /// עדכון משתמש - המשתמש עצמו או מנהל סטודנטים
+        /// </summary>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePerson(string id, [FromBody] Person person)
+        public IActionResult UpdatePerson(string id, [FromBody] Person person)
         {
             try
             {
                 if (person == null)
                     return BadRequest("Person data is null");
-
                 if (id != person.PersonId)
                     return BadRequest("ID mismatch");
 
@@ -100,17 +121,17 @@ namespace FinalProject.Controllers
                 if (existingPerson == null)
                     return NotFound($"Person with ID {id} not found");
 
+                var currentUserId = User.Identity?.Name;
+                var isAdmin = User.IsInRole("מנהל סטודנטים");
+
+                // רק המשתמש עצמו או מנהל יכול לעדכן
+                if (currentUserId != id && !isAdmin)
+                    return Forbid("Not authorized to update this person");
+
                 var result = _personService.UpdatePerson(person);
                 if (result > 0)
                 {
-                    await _auditTrailService.LogActionAsync(
-                        "Anonymous",
-                        "Update",
-                        "Person",
-                        int.Parse(person.PersonId),
-                        $"Updated person: {person.FirstName} {person.LastName} {person.Username} {person.Email} {person.DepartmentID}{person.Position}{person.IsActive}"
-                    );
-
+                    person.Password = null;
                     return Ok(person);
                 }
                 else
@@ -124,11 +145,20 @@ namespace FinalProject.Controllers
             }
         }
 
+        /// <summary>
+        /// קבלת תפקידים של משתמש - המשתמש עצמו או מנהל
+        /// </summary>
         [HttpGet("{id}/roles")]
         public IActionResult GetPersonRoles(string id)
         {
             try
             {
+                var currentUserId = User.Identity?.Name;
+                var isAdmin = User.IsInRole("מנהל סטודנטים");
+
+                if (currentUserId != id && !isAdmin)
+                    return Forbid("Not authorized to view this person's roles");
+
                 var roles = _personService.GetPersonRoles(id);
                 return Ok(roles);
             }
@@ -138,8 +168,12 @@ namespace FinalProject.Controllers
             }
         }
 
+        /// <summary>
+        /// הקצאת תפקיד למשתמש - רק מנהל סטודנטים
+        /// </summary>
         [HttpPost("{id}/roles/{roleId}")]
-        public async Task<IActionResult> AssignRoleToPerson(string id, int roleId)
+        [Authorize(Roles = "מנהל סטודנטים")]
+        public IActionResult AssignRoleToPerson(string id, int roleId)
         {
             try
             {
@@ -150,15 +184,7 @@ namespace FinalProject.Controllers
                 var result = _personService.AssignRoleToPerson(id, roleId);
                 if (result > 0)
                 {
-                    await _auditTrailService.LogActionAsync(
-                        "Anonymous",
-                        "AssignRole",
-                        "Person",
-                        int.Parse(id),
-                        $"Assigned role ID {roleId} to person"
-                    );
-
-                    return Ok();
+                    return Ok(new { Message = "Role assigned successfully" });
                 }
                 else
                 {
@@ -171,8 +197,12 @@ namespace FinalProject.Controllers
             }
         }
 
+        /// <summary>
+        /// הסרת תפקיד ממשתמש - רק מנהל סטודנטים
+        /// </summary>
         [HttpDelete("{id}/roles/{roleId}")]
-        public async Task<IActionResult> RemoveRoleFromPerson(string id, int roleId)
+        [Authorize(Roles = "מנהל סטודנטים")]
+        public IActionResult RemoveRoleFromPerson(string id, int roleId)
         {
             try
             {
@@ -183,15 +213,7 @@ namespace FinalProject.Controllers
                 var result = _personService.RemoveRoleFromPerson(id, roleId);
                 if (result > 0)
                 {
-                    await _auditTrailService.LogActionAsync(
-                        "Anonymous",
-                        "RemoveRole",
-                        "Person",
-                        int.Parse(id),
-                        $"Removed role ID {roleId} from person"
-                    );
-
-                    return Ok();
+                    return Ok(new { Message = "Role removed successfully" });
                 }
                 else
                 {
