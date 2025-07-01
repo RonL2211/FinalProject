@@ -3190,5 +3190,13 @@
     "EntityType": "SectionField",
     "EntityId": 1042,
     "Details": "Created new field: 111111 for section 1048"
+  },
+  {
+    "Timestamp": "2025-06-29T17:32:42.0140084+03:00",
+    "UserId": "605221010",
+    "Action": "Login",
+    "EntityType": "Auth",
+    "EntityId": 0,
+    "Details": "User logged in: 605221010"
   }
 ]
