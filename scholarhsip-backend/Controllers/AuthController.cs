@@ -18,13 +18,11 @@ namespace FinalProject.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthenticationService _authService;
-        private readonly AuditTrailService _auditTrailService;
         private readonly IConfiguration _configuration;
 
         public AuthController(IConfiguration configuration)
         {
             _authService = new AuthenticationService(configuration);
-            _auditTrailService = new AuditTrailService(configuration);
             _configuration = configuration;
         }
 
@@ -41,13 +39,6 @@ namespace FinalProject.Controllers
 
             var token = GenerateJwtToken(person);
 
-            await _auditTrailService.LogActionAsync(
-                person.PersonId,
-                "Login",
-                "Auth",
-                0,
-                $"User logged in: {person.PersonId}"
-            );
 
             // תשובה מחזירה את הטוקן ואת המידע במפתח "person" (camelCase)
             return Ok(new { token = token, person = person });
@@ -59,13 +50,6 @@ namespace FinalProject.Controllers
         {
             var currentUserId = User?.Identity?.Name ?? "Anonymous";
 
-            await _auditTrailService.LogActionAsync(
-                currentUserId,
-                "Logout",
-                "Auth",
-                0,
-                "User logged out"
-            );
 
             return Ok(new { Message = "Logout successful" });
         }

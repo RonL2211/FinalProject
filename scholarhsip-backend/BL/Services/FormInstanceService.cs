@@ -1,4 +1,5 @@
-﻿using FinalProject.DAL.Models;
+﻿//FormInstanceService.cs - מתוקן עם תמיכה בסטטוסים החדשים
+using FinalProject.DAL.Models;
 using FinalProject.DAL.Repositories;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -57,15 +58,19 @@ namespace FinalProject.BL.Services
             if (person == null)
                 throw new ArgumentException($"User with ID {userId} does not exist");
 
-            // בדיקה שלא קיים כבר מופע של טופס זה למשתמש זה
+            // בדיקה שלא קיים כבר מופע פעיל של טופס זה למשתמש זה
             var existingInstances = _instanceRepository.GetInstancesByUserId(userId)
-                .Where(i => i.FormId == formId && i.CurrentStage != "Rejected" && i.CurrentStage != "Closed")
+                .Where(i => i.FormId == formId &&
+                           i.CurrentStage != "Rejected" &&
+                           i.CurrentStage != "AppealRejected" &&
+                           i.CurrentStage != "FinalApproved" &&
+                           i.CurrentStage != "AppealApproved")
                 .ToList();
 
             if (existingInstances.Any())
                 throw new InvalidOperationException("User already has an active instance of this form");
 
-            // יצירת מופע הטופס
+            // יצירת מופע הטופס עם סטטוס טיוטה
             var instance = new FormInstance
             {
                 FormId = formId,
@@ -84,142 +89,95 @@ namespace FinalProject.BL.Services
             if (instanceId <= 0)
                 throw new ArgumentException("Instance ID must be greater than zero");
 
-            // בדיקה שהמופע קיים
             var instance = _instanceRepository.GetInstanceById(instanceId);
             if (instance == null)
                 throw new ArgumentException($"Instance with ID {instanceId} does not exist");
 
-            // בדיקה שהמופע במצב טיוטה
-            if (instance.CurrentStage != "Draft")
-                throw new InvalidOperationException("Cannot submit an instance that is not in Draft status");
+            // בדיקה שהמופע במצב טיוטה או הוחזר לתיקון
+            if (instance.CurrentStage != "Draft" && instance.CurrentStage != "Returned")
+                throw new InvalidOperationException("Can only submit instances in Draft or Returned status");
 
-            // עדכון סטטוס המופע ל-'הוגש'
-            instance.CurrentStage = "Submitted";
-            instance.SubmissionDate = DateTime.Now;
-            instance.Comments = comments;
-
-            return _instanceRepository.UpdateInstanceStatus(instanceId, instance.CurrentStage, comments);
+            // עדכון סטטוס המופע ל-'הוגש לראש מחלקה'
+            return _instanceRepository.UpdateInstanceStatus(instanceId, "Submitted", comments);
         }
 
-        public int ApproveInstance(int instanceId, decimal totalScore, string comments = null)
+        public int ApproveInstanceByDepartment(int instanceId, string comments = null)
         {
-            if (instanceId <= 0)
-                throw new ArgumentException("Instance ID must be greater than zero");
+            return UpdateInstanceStatusWithValidation(instanceId, "Submitted", "ApprovedByDepartment", comments);
+        }
 
-            // בדיקה שהמופע קיים
-            var instance = _instanceRepository.GetInstanceById(instanceId);
-            if (instance == null)
-                throw new ArgumentException($"Instance with ID {instanceId} does not exist");
+        public int ApproveInstanceByDean(int instanceId, string comments = null)
+        {
+            return UpdateInstanceStatusWithValidation(instanceId, "ApprovedByDepartment", "ApprovedByDean", comments);
+        }
 
-            // בדיקה שהמופע במצב 'הוגש'
-            if (instance.CurrentStage != "Submitted" && instance.CurrentStage != "UnderReview")
-                throw new InvalidOperationException("Cannot approve an instance that is not in Submitted or UnderReview status");
+        public int FinalApproveInstance(int instanceId, decimal? totalScore = null, string comments = null)
+        {
+            var result = UpdateInstanceStatusWithValidation(instanceId, "ApprovedByDean", "FinalApproved", comments);
 
-            // עדכון סטטוס המופע ל-'מאושר'
-            instance.CurrentStage = "Approved";
-            instance.TotalScore = totalScore;
-            instance.LastModifiedDate = DateTime.Now;
-            instance.Comments = comments;
+            // עדכון ציון אם סופק
+            if (totalScore.HasValue && result > 0)
+            {
+                _instanceRepository.SubmitInstance(instanceId, totalScore.Value);
+            }
 
-            _instanceRepository.UpdateInstanceStatus(instanceId, instance.CurrentStage, comments);
-            return _instanceRepository.SubmitInstance(instanceId, totalScore);
+            return result;
         }
 
         public int RejectInstance(int instanceId, string comments)
         {
-            if (instanceId <= 0)
-                throw new ArgumentException("Instance ID must be greater than zero");
-
             if (string.IsNullOrEmpty(comments))
                 throw new ArgumentException("Comments are required for rejection");
 
-            // בדיקה שהמופע קיים
             var instance = _instanceRepository.GetInstanceById(instanceId);
             if (instance == null)
                 throw new ArgumentException($"Instance with ID {instanceId} does not exist");
 
-            // בדיקה שהמופע במצב 'הוגש'
-            if (instance.CurrentStage != "Submitted" && instance.CurrentStage != "UnderReview")
-                throw new InvalidOperationException("Cannot reject an instance that is not in Submitted or UnderReview status");
+            // ניתן לדחות מופעים בכל שלב של הבדיקה
+            var allowedStatuses = new[] { "Submitted", "ApprovedByDepartment", "ApprovedByDean", "UnderAppeal" };
+            if (!allowedStatuses.Contains(instance.CurrentStage))
+                throw new InvalidOperationException($"Cannot reject instance in status {instance.CurrentStage}");
 
-            // עדכון סטטוס המופע ל-'נדחה'
-            instance.CurrentStage = "Rejected";
-            instance.LastModifiedDate = DateTime.Now;
-            instance.Comments = comments;
-
-            return _instanceRepository.UpdateInstanceStatus(instanceId, instance.CurrentStage, comments);
+            return _instanceRepository.UpdateInstanceStatus(instanceId, "Rejected", comments);
         }
 
         public int ReturnForRevision(int instanceId, string comments)
         {
-            if (instanceId <= 0)
-                throw new ArgumentException("Instance ID must be greater than zero");
-
             if (string.IsNullOrEmpty(comments))
                 throw new ArgumentException("Comments are required for return");
 
-            // בדיקה שהמופע קיים
             var instance = _instanceRepository.GetInstanceById(instanceId);
             if (instance == null)
                 throw new ArgumentException($"Instance with ID {instanceId} does not exist");
 
-            // בדיקה שהמופע במצב 'הוגש'
-            if (instance.CurrentStage != "Submitted" && instance.CurrentStage != "UnderReview")
-                throw new InvalidOperationException("Cannot return an instance that is not in Submitted or UnderReview status");
+            // ניתן להחזיר לתיקון מופעים בשלבי בדיקה
+            var allowedStatuses = new[] { "Submitted", "ApprovedByDepartment", "ApprovedByDean" };
+            if (!allowedStatuses.Contains(instance.CurrentStage))
+                throw new InvalidOperationException($"Cannot return instance in status {instance.CurrentStage}");
 
-            // עדכון סטטוס המופע ל-'חזר לתיקונים'
-            instance.CurrentStage = "ReturnedForRevision";
-            instance.LastModifiedDate = DateTime.Now;
-            instance.Comments = comments;
-
-            return _instanceRepository.UpdateInstanceStatus(instanceId, instance.CurrentStage, comments);
+            return _instanceRepository.UpdateInstanceStatus(instanceId, "Returned", comments);
         }
 
-        public int MarkAsUnderReview(int instanceId, string comments = null)
+        public int UpdateInstanceStatus(int instanceId, string newStatus, string comments = null)
         {
             if (instanceId <= 0)
                 throw new ArgumentException("Instance ID must be greater than zero");
 
-            // בדיקה שהמופע קיים
-            var instance = _instanceRepository.GetInstanceById(instanceId);
-            if (instance == null)
-                throw new ArgumentException($"Instance with ID {instanceId} does not exist");
+            if (string.IsNullOrEmpty(newStatus))
+                throw new ArgumentException("New status cannot be empty");
 
-            // בדיקה שהמופע במצב 'הוגש'
-            if (instance.CurrentStage != "Submitted")
-                throw new InvalidOperationException("Cannot mark as under review an instance that is not in Submitted status");
+            // רשימת סטטוסים תקינים
+            var validStatuses = new[]
+            {
+                "Draft", "Submitted", "ApprovedByDepartment", "ApprovedByDean",
+                "FinalApproved", "Rejected", "UnderAppeal", "AppealApproved",
+                "AppealRejected", "Returned"
+            };
 
-            // עדכון סטטוס המופע ל-'בבדיקה'
-            instance.CurrentStage = "UnderReview";
-            instance.LastModifiedDate = DateTime.Now;
-            instance.Comments = comments;
+            if (!validStatuses.Contains(newStatus))
+                throw new ArgumentException($"Invalid status: {newStatus}");
 
-            return _instanceRepository.UpdateInstanceStatus(instanceId, instance.CurrentStage, comments);
-        }
-
-        public int AppealInstance(int instanceId, string appealReason)
-        {
-            if (instanceId <= 0)
-                throw new ArgumentException("Instance ID must be greater than zero");
-
-            if (string.IsNullOrEmpty(appealReason))
-                throw new ArgumentException("Appeal reason is required");
-
-            // בדיקה שהמופע קיים
-            var instance = _instanceRepository.GetInstanceById(instanceId);
-            if (instance == null)
-                throw new ArgumentException($"Instance with ID {instanceId} does not exist");
-
-            // בדיקה שהמופע במצב 'נדחה' או 'מאושר'
-            if (instance.CurrentStage != "Rejected" && instance.CurrentStage != "Approved")
-                throw new InvalidOperationException("Cannot appeal an instance that is not in Rejected or Approved status");
-
-            // עדכון סטטוס המופע ל-'בערעור'
-            instance.CurrentStage = "UnderAppeal";
-            instance.LastModifiedDate = DateTime.Now;
-            instance.Comments = appealReason;
-
-            return _instanceRepository.UpdateInstanceStatus(instanceId, instance.CurrentStage, appealReason);
+            return _instanceRepository.UpdateInstanceStatus(instanceId, newStatus, comments);
         }
 
         public List<FormInstance> GetInstancesByStage(string stage)
@@ -257,6 +215,66 @@ namespace FinalProject.BL.Services
             stats.Add("Total", instances.Count);
 
             return stats;
+        }
+
+        public List<FormInstance> GetInstancesForDepartmentHead(int departmentId)
+        {
+            if (departmentId <= 0)
+                throw new ArgumentException("Department ID must be greater than zero");
+
+            return _instanceRepository.GetInstancesByStage("Submitted")
+                .Where(i => {
+                    var user = _personRepository.GetPersonById(i.UserID);
+                    return user?.DepartmentID == departmentId;
+                }).ToList();
+        }
+
+        public List<FormInstance> GetInstancesForDean(int facultyId)
+        {
+            if (facultyId <= 0)
+                throw new ArgumentException("Faculty ID must be greater than zero");
+
+            return _instanceRepository.GetInstancesByStage("ApprovedByDepartment")
+                .Where(i => {
+                    var user = _personRepository.GetPersonById(i.UserID);
+                    if (user?.DepartmentID == null) return false;
+
+                    // כאן צריך לקבל את הפקולטה של המחלקה - צריך DepartmentService
+                    // נניח שיש לנו גישה אליו או נשתמש בשאילתה ישירה
+                    return true; // זמני - יש לממש בצורה נכונה
+                }).ToList();
+        }
+
+        public bool CanInstanceBeEdited(int instanceId, string userId)
+        {
+            var instance = GetInstanceById(instanceId);
+            if (instance == null || instance.UserID != userId)
+                return false;
+
+            // ניתן לערוך רק טיוטות או מופעים שהוחזרו לתיקון
+            return instance.CurrentStage == "Draft" || instance.CurrentStage == "Returned";
+        }
+
+        public bool CanInstanceBeSubmitted(int instanceId, string userId)
+        {
+            var instance = GetInstanceById(instanceId);
+            if (instance == null || instance.UserID != userId)
+                return false;
+
+            return instance.CurrentStage == "Draft" || instance.CurrentStage == "Returned";
+        }
+
+        // Helper method for status validation
+        private int UpdateInstanceStatusWithValidation(int instanceId, string expectedCurrentStatus, string newStatus, string comments)
+        {
+            var instance = _instanceRepository.GetInstanceById(instanceId);
+            if (instance == null)
+                throw new ArgumentException($"Instance with ID {instanceId} does not exist");
+
+            if (instance.CurrentStage != expectedCurrentStatus)
+                throw new InvalidOperationException($"Instance must be in {expectedCurrentStatus} status to move to {newStatus}");
+
+            return _instanceRepository.UpdateInstanceStatus(instanceId, newStatus, comments);
         }
     }
 }
