@@ -11,17 +11,17 @@ namespace FinalProject
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // десфъ щйшеъй бчш + Swagger
+            // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ + Swagger
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            // двгшеъ JWT оъек appsettings.json
+            // пїЅпїЅпїЅпїЅпїЅпїЅ JWT пїЅпїЅпїЅпїЅ appsettings.json
             var jwtKey = builder.Configuration["Jwt:Key"];
             var jwtIssuer = builder.Configuration["Jwt:Issuer"];
             var jwtAudience = builder.Configuration["Jwt:Audience"];
 
-            // десфъ щлбъ Authentication тн JWT
+            // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ Authentication пїЅпїЅ JWT
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -46,16 +46,16 @@ namespace FinalProject
 
             var app = builder.Build();
 
-            // дфтмъ Swagger блм оцб (бфйъез ебфшегчщп ан шецйн)
+            // пїЅпїЅпїЅпїЅпїЅ Swagger пїЅпїЅпїЅ пїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ)
             app.UseSwagger();
             app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
 
-            ///////// щешд же ресфд мцешк двгшъ CORS фъез (вйщд олм очеш)
+            ///////// пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ CORS пїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ)
             app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
-            // зщеб! чегн Authentication еаж Authorization
+            // пїЅпїЅпїЅпїЅ! пїЅпїЅпїЅпїЅ Authentication пїЅпїЅпїЅ Authorization
             app.UseAuthentication();
             app.UseAuthorization();
 
