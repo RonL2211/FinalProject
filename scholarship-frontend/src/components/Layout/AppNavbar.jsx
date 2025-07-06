@@ -17,6 +17,7 @@ const AppNavbar = () => {
   const getNavItems = () => {
     const items = [];
 
+    // מנהל סטודנטים - רק ניהול
     if (hasRole('מנהל סטודנטים')) {
       items.push(
         { path: '/manager', label: 'דף הבית', exact: true },
@@ -24,19 +25,33 @@ const AppNavbar = () => {
         { path: '/manager/appeals', label: 'ערעורים' },
         { path: '/manager/users', label: 'ניהול משתמשים' }
       );
-    } else if (hasRole('דיקאן')) {
+    } 
+    // דיקאן - יכול לראות דפי מרצה + דפי דיקאן
+    else if (hasRole('דיקאן')) {
       items.push(
-        { path: '/dean', label: 'דף הבית', exact: true },
+        { path: '/dean', label: 'ניהול פקולטה', exact: true },
         { path: '/dean/review', label: 'בדיקת טפסים' },
-        { path: '/dean/reports', label: 'דוחות פקולטה' }
+        { path: '/dean/reports', label: 'דוחות פקולטה' },
+        { divider: true },
+        { path: '/lecturer', label: 'דפי מרצה', exact: true },
+        { path: '/lecturer/forms', label: 'טפסים זמינים' },
+        { path: '/lecturer/my-forms', label: 'הטפסים שלי' }
       );
-    } else if (hasRole('ראש מחלקה')) {
+    } 
+    // ראש מחלקה - יכול לראות דפי מרצה + דפי ראש מחלקה
+    else if (hasRole('ראש מחלקה')) {
       items.push(
-        { path: '/dept-head', label: 'דף הבית', exact: true },
+        { path: '/dept-head', label: 'ניהול מחלקה', exact: true },
         { path: '/dept-head/review', label: 'בדיקת טפסים' },
-        { path: '/dept-head/reports', label: 'דוחות מחלקה' }
+        { path: '/dept-head/reports', label: 'דוחות מחלקה' },
+        { divider: true },
+        { path: '/lecturer', label: 'דפי מרצה', exact: true },
+        { path: '/lecturer/forms', label: 'טפסים זמינים' },
+        { path: '/lecturer/my-forms', label: 'הטפסים שלי' }
       );
-    } else if (hasRole('מרצה') || hasRole('ראש התמחות')) {
+    } 
+    // מרצה/ראש התמחות - רק דפי מרצה
+    else if (hasRole('מרצה') || hasRole('ראש התמחות')) {
       items.push(
         { path: '/lecturer', label: 'דף הבית', exact: true },
         { path: '/lecturer/forms', label: 'טפסים זמינים' },
@@ -65,16 +80,28 @@ const AppNavbar = () => {
         
         <Navbar.Collapse id="main-navbar-nav">
           <Nav className="me-auto">
-            {getNavItems().map((item) => (
-              <Nav.Link
-                key={item.path}
-                as={Link}
-                to={item.path}
-                className={isActivePath(item.path, item.exact) ? 'active' : ''}
-              >
-                {item.label}
-              </Nav.Link>
-            ))}
+            {getNavItems().map((item, index) => {
+              if (item.divider) {
+                return (
+                  <div key={`divider-${index}`} className="nav-divider mx-2" style={{ 
+                    borderLeft: '1px solid rgba(255,255,255,0.3)', 
+                    height: '20px', 
+                    alignSelf: 'center' 
+                  }}></div>
+                );
+              }
+              
+              return (
+                <Nav.Link
+                  key={item.path}
+                  as={Link}
+                  to={item.path}
+                  className={isActivePath(item.path, item.exact) ? 'active' : ''}
+                >
+                  {item.label}
+                </Nav.Link>
+              );
+            })}
           </Nav>
 
           <div className="d-flex align-items-center">

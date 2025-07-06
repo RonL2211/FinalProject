@@ -39,7 +39,7 @@ namespace FinalProject.DAL.Repositories
                         Explanation = dataReader["Explanation"].ToString(),
                         MaxPoints = dataReader["MaxPoints"] != DBNull.Value ? Convert.ToDecimal(dataReader["MaxPoints"]) : null,
                         ResponsibleEntity = dataReader["ResponsibleEntity"] != DBNull.Value ? Convert.ToInt32(dataReader["ResponsibleEntity"]) : null,
-                        ResponsiblePerson = dataReader["ResposiblePerson"]?.ToString(),
+                        ResponsiblePerson = dataReader["ResponsiblePerson"]?.ToString(),
                         IsRequired = Convert.ToBoolean(dataReader["IsRequired"]),
                         IsVisible = Convert.ToBoolean(dataReader["IsVisible"]),
                         MaxOccurrences = dataReader["MaxOccurrences"] != DBNull.Value ? Convert.ToInt32(dataReader["MaxOccurrences"]) : null
@@ -81,7 +81,7 @@ namespace FinalProject.DAL.Repositories
                         Explanation = dataReader["Explanation"].ToString(),
                         MaxPoints = dataReader["MaxPoints"] != DBNull.Value ? Convert.ToDecimal(dataReader["MaxPoints"]) : null,
                         ResponsibleEntity = dataReader["ResponsibleEntity"] != DBNull.Value ? Convert.ToInt32(dataReader["ResponsibleEntity"]) : null,
-                        ResponsiblePerson = dataReader["ResposiblePerson"]?.ToString(),
+                        ResponsiblePerson = dataReader["ResponsiblePerson"]?.ToString(),
                         IsRequired = Convert.ToBoolean(dataReader["IsRequired"]),
                         IsVisible = Convert.ToBoolean(dataReader["IsVisible"]),
                         MaxOccurrences = dataReader["MaxOccurrences"] != DBNull.Value ? Convert.ToInt32(dataReader["MaxOccurrences"]) : null
@@ -199,7 +199,7 @@ namespace FinalProject.DAL.Repositories
                         Explanation = dataReader["Explanation"].ToString(),
                         MaxPoints = dataReader["MaxPoints"] != DBNull.Value ? Convert.ToDecimal(dataReader["MaxPoints"]) : null,
                         ResponsibleEntity = dataReader["ResponsibleEntity"] != DBNull.Value ? Convert.ToInt32(dataReader["ResponsibleEntity"]) : null,
-                        ResponsiblePerson = dataReader["ResposiblePerson"]?.ToString(),
+                        ResponsiblePerson = dataReader["ResponsiblePerson"]?.ToString(),
                         IsRequired = Convert.ToBoolean(dataReader["IsRequired"]),
                         IsVisible = Convert.ToBoolean(dataReader["IsVisible"]),
                         MaxOccurrences = dataReader["MaxOccurrences"] != DBNull.Value ? Convert.ToInt32(dataReader["MaxOccurrences"]) : null

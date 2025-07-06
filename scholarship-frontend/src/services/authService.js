@@ -1,4 +1,4 @@
-// src/services/authService.js
+// src/services/authService.js - מתוקן
 import axios from 'axios';
 
 const API_BASE_URL = 'https://localhost:7230/api';
@@ -29,7 +29,10 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       logout();
-      window.location.href = '/login';
+      // רק אם לא במסך login כבר
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -64,7 +67,11 @@ export const login = async (personId, password) => {
     
     if (error.response) {
       // Server responded with error status
-      throw new Error(error.response.data?.message || 'שגיאה בהתחברות');
+      const message = error.response.data?.message || 
+                     error.response.data?.title || 
+                     error.response.data || 
+                     'שגיאה בהתחברות';
+      throw new Error(message);
     } else if (error.request) {
       // Network error
       throw new Error('שגיאת רשת - אין חיבור לשרת');
@@ -101,33 +108,50 @@ export const isAuthenticated = () => {
   return !!(token && user);
 };
 
-// פונקציות בדיקת הרשאות
+// פונקציות בדיקת הרשאות - מתוקנות!
 export const hasRole = (roleName) => {
   const user = getCurrentUser();
-  if (!user || !user.roles) return false;
+  if (!user) return false;
   
-  return user.roles.some(role => 
-    role.roleName === roleName || role.RoleName === roleName
-  );
+  // בדיקה אם יש מערך roles
+  if (user.roles && Array.isArray(user.roles)) {
+    return user.roles.some(role => 
+      role.roleName === roleName || role.RoleName === roleName
+    );
+  }
+  
+  // גיבוי לבדיקת position (לתמיכה לאחור)
+  if (user.position) {
+    return user.position === roleName;
+  }
+  
+  return false;
 };
 
 export const hasAnyRole = (roleNames) => {
   return roleNames.some(roleName => hasRole(roleName));
 };
 
-// מיפוי תפקידים לנתיבים
+// מיפוי תפקידים לנתיבים - מתוקן עם הרשאות מקרוסות!
 export const getRoleBasedRedirect = (user) => {
-  if (!user || !user.roles) return '/login';
+  if (!user) return '/login';
   
-  const roles = user.roles.map(r => r.roleName || r.RoleName);
+  // בדיקה אם יש מערך roles
+  let roles = [];
+  if (user.roles && Array.isArray(user.roles)) {
+    roles = user.roles.map(r => r.roleName || r.RoleName);
+  } else if (user.position) {
+    // גיבוי לשדה position
+    roles = [user.position];
+  }
   
-  // סדר עדיפויות - התפקיד הגבוה ביותר
+  // סדר עדיפויות - התפקיד הגבוה ביותר קובע דף הבית
   if (roles.includes('מנהל סטודנטים')) {
     return '/manager';
   } else if (roles.includes('דיקאן')) {
-    return '/dean';
+    return '/dean'; // דיקאן מתחיל בדפי ניהול פקולטה
   } else if (roles.includes('ראש מחלקה')) {
-    return '/dept-head';
+    return '/dept-head'; // ראש מחלקה מתחיל בדפי ניהול מחלקה
   } else if (roles.includes('מרצה') || roles.includes('ראש התמחות')) {
     return '/lecturer';
   } else {
@@ -135,12 +159,19 @@ export const getRoleBasedRedirect = (user) => {
   }
 };
 
-// בדיקת הרשאת גישה לנתיב
+// בדיקת הרשאת גישה לנתיב - מתוקנת!
 export const canAccessRoute = (path) => {
   const user = getCurrentUser();
   if (!user) return false;
   
-  const roles = user.roles?.map(r => r.roleName || r.RoleName) || [];
+  // בדיקה אם יש מערך roles
+  let roles = [];
+  if (user.roles && Array.isArray(user.roles)) {
+    roles = user.roles.map(r => r.roleName || r.RoleName);
+  } else if (user.position) {
+    // גיבוי לשדה position
+    roles = [user.position];
+  }
   
   // נתיבים פתוחים
   if (['/login', '/unauthorized'].includes(path)) {
@@ -169,6 +200,10 @@ export const refreshUserData = async () => {
     
     const response = await api.get(`/person/${user.personId}`);
     const updatedUser = response.data;
+    
+    // קבלת התפקידים העדכניים
+    const rolesResponse = await api.get(`/person/${user.personId}/roles`);
+    updatedUser.roles = rolesResponse.data;
     
     localStorage.setItem('currentUser', JSON.stringify(updatedUser));
     return updatedUser;

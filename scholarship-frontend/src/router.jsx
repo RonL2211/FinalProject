@@ -9,13 +9,13 @@ import LoadingSpinner from './components/UI/LoadingSpinner';
 // Auth Pages
 import LoginPage from './pages/Auth/LoginPage';
 
-// Manager Pages (מנהל סטודנטים)
-import ManagerDashboard from './pages/Manager/Dashboard';
-import FormsManagement from './pages/Manager/FormsManagement';
-import FormBuilder from './pages/Manager/FormBuilder';
-import FormEditor from './pages/Manager/FormEditor';
-import ReviewAppeals from './pages/Manager/ReviewAppeals';
-import UsersManagement from './pages/Manager/UsersManagement';
+// // Manager Pages (מנהל סטודנטים)
+// import ManagerDashboard from './pages/Manager/Dashboard';
+// import FormsManagement from './pages/Manager/FormsManagement';
+// import FormBuilder from './pages/Manager/FormBuilder';
+// import FormEditor from './pages/Manager/FormEditor';
+// import ReviewAppeals from './pages/Manager/ReviewAppeals';
+// import UsersManagement from './pages/Manager/UsersManagement';
 
 // Dean Pages (דיקאן)
 import DeanDashboard from './pages/Dean/Dashboard';
@@ -37,7 +37,7 @@ import SubmitAppeal from './pages/Lecturer/SubmitAppeal';
 // Shared Pages
 import UnauthorizedPage from './pages/Shared/UnauthorizedPage';
 import NotFoundPage from './pages/Shared/NotFoundPage';
-import ProfilePage from './pages/Shared/ProfilePage';
+// import ProfilePage from './pages/Shared/ProfilePage';
 
 const AppRouter = () => {
   const { isAuthenticated, isLoading, getDefaultRoute } = useAuth();
@@ -73,32 +73,32 @@ const AppRouter = () => {
           {/* Manager Routes (מנהל סטודנטים) */}
           <Route path="/manager" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <ManagerDashboard />
+              {/* <ManagerDashboard /> */}
             </ProtectedRoute>
           } />
           <Route path="/manager/forms" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <FormsManagement />
+              {/* <FormsManagement /> */}
             </ProtectedRoute>
           } />
           <Route path="/manager/forms/new" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <FormBuilder />
+              {/* <FormBuilder /> */}
             </ProtectedRoute>
           } />
           <Route path="/manager/forms/edit/:id" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <FormEditor />
+              {/* <FormEditor /> */}
             </ProtectedRoute>
           } />
           <Route path="/manager/appeals" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <ReviewAppeals />
+              {/* <ReviewAppeals /> */}
             </ProtectedRoute>
           } />
           <Route path="/manager/users" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <UsersManagement />
+              {/* <UsersManagement /> */}
             </ProtectedRoute>
           } />
 
@@ -136,29 +136,29 @@ const AppRouter = () => {
             </ProtectedRoute>
           } />
 
-          {/* Lecturer Routes (מרצה/ראש התמחות) */}
+          {/* Lecturer Routes (מרצה/ראש התמחות/ראש מחלקה/דיקאן) */}
           <Route path="/lecturer" element={
-            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות']}>
+            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
               <LecturerDashboard />
             </ProtectedRoute>
           } />
           <Route path="/lecturer/forms" element={
-            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות']}>
+            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
               <AvailableForms />
             </ProtectedRoute>
           } />
           <Route path="/lecturer/fill/:id" element={
-            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות']}>
+            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
               <FillForm />
             </ProtectedRoute>
           } />
           <Route path="/lecturer/my-forms" element={
-            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות']}>
+            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
               <MyForms />
             </ProtectedRoute>
           } />
           <Route path="/lecturer/appeal/:id" element={
-            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות']}>
+            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
               <SubmitAppeal />
             </ProtectedRoute>
           } />
@@ -166,7 +166,7 @@ const AppRouter = () => {
           {/* Shared Routes */}
           <Route path="/profile" element={
             <ProtectedRoute>
-              <ProfilePage />
+              {/* <ProfilePage /> */}
             </ProtectedRoute>
           } />
 

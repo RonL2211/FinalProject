@@ -174,12 +174,23 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  // בדיקות הרשאות
+  // בדיקות הרשאות - מתוקנות!
   const hasRole = (roleName) => {
-    if (!state.user || !state.user.roles) return false;
-    return state.user.roles.some(role => 
-      (role.roleName === roleName) || (role.RoleName === roleName)
-    );
+    if (!state.user) return false;
+    
+    // בדיקה אם יש מערך roles
+    if (state.user.roles && Array.isArray(state.user.roles)) {
+      return state.user.roles.some(role => 
+        (role.roleName === roleName) || (role.RoleName === roleName)
+      );
+    }
+    
+    // גיבוי לבדיקת position (לתמיכה לאחור)
+    if (state.user.position) {
+      return state.user.position === roleName;
+    }
+    
+    return false;
   };
 
   const hasAnyRole = (roleNames) => {

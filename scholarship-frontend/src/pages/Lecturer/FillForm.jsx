@@ -256,6 +256,9 @@ const FillForm = () => {
     );
   }
 
+  // תיקון: וידוא ש-formStructure הוא מערך
+  const safeFormStructure = Array.isArray(formStructure) ? formStructure : [];
+
   return (
     <Container>
       {/* כותרת */}
@@ -289,7 +292,7 @@ const FillForm = () => {
         <Col lg={8}>
           <Card>
             <Card.Body>
-              {formStructure.length === 0 ? (
+              {safeFormStructure.length === 0 ? (
                 <div className="text-center py-5">
                   <i className="bi bi-clipboard-x text-muted" style={{ fontSize: '3rem' }}></i>
                   <h4 className="mt-3 text-muted">הטופס ריק</h4>
@@ -298,7 +301,7 @@ const FillForm = () => {
               ) : (
                 <Form>
                   <Accordion defaultActiveKey="0">
-                    {formStructure.map((section, index) => (
+                    {safeFormStructure.map((section, index) => (
                       <Accordion.Item key={section.sectionID} eventKey={index.toString()}>
                         <Accordion.Header>
                           <div>
@@ -315,7 +318,8 @@ const FillForm = () => {
                             </Alert>
                           )}
                           
-                          {section.fields?.map(field => (
+                          {/* תיקון: וידוא ש-fields הוא מערך */}
+                          {Array.isArray(section.fields) && section.fields.map(field => (
                             <Form.Group key={field.fieldID} className="mb-3">
                               <Form.Label className="fw-bold">
                                 {field.fieldLabel}
@@ -331,6 +335,14 @@ const FillForm = () => {
                               {renderField(field)}
                             </Form.Group>
                           ))}
+                          
+                          {/* אם אין שדות בסעיף */}
+                          {(!section.fields || section.fields.length === 0) && (
+                            <div className="text-muted text-center py-3">
+                              <i className="bi bi-info-circle me-1"></i>
+                              אין שדות בסעיף זה
+                            </div>
+                          )}
                         </Accordion.Body>
                       </Accordion.Item>
                     ))}
@@ -386,7 +398,7 @@ const FillForm = () => {
                 </div>
                 <div className="d-flex justify-content-between">
                   <span>סך שדות:</span>
-                  <span>{formStructure.reduce((acc, section) => acc + (section.fields?.length || 0), 0)}</span>
+                  <span>{safeFormStructure.reduce((acc, section) => acc + (Array.isArray(section.fields) ? section.fields.length : 0), 0)}</span>
                 </div>
               </div>
             </Card.Body>

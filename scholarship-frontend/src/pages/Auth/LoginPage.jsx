@@ -46,7 +46,8 @@ const LoginPage = () => {
     }
 
     try {
-      await login(formData.personId, formData.password);
+      const result = await login(formData.personId, formData.password);
+      console.log('Login successful:', result);
       // ההפניה תקרה אוטומטית דרך useEffect למעלה
     } catch (err) {
       // השגיאה כבר מטופלת ב-AuthContext

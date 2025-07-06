@@ -7,7 +7,7 @@ import { login } from "../services/authService";
 import { Container, Row, Col, Form, Button, Alert } from "react-bootstrap";
 
 // לוגו
-import ruppstarLogo from "../assets/Logo.png";
+// import ruppstarLogo from "../assets/Logo.png";
 
 // CSS מותאם משלך (אופציונלי)
 import "../styles/LoginPage.css";

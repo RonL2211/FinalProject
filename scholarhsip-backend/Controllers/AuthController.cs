@@ -37,38 +37,49 @@ namespace FinalProject.Controllers
             if (person == null)
                 return Unauthorized("Invalid personId or password");
 
-            var token = GenerateJwtToken(person);
+            // הוספת התפקידים לאובייקט Person
+            var roleService = new RoleService(_configuration);
+            var roles = roleService.GetPersonRoles(person.PersonId);
 
+            // יצירת טוקן
+            var token = GenerateJwtToken(person, roles);
 
-            // תשובה מחזירה את הטוקן ואת המידע במפתח "person" (camelCase)
-            return Ok(new { token = token, person = person });
+            // הוספת התפקידים לתשובה
+            var response = new
+            {
+                token = token,
+                person = new
+                {
+                    personId = person.PersonId,
+                    firstName = person.FirstName,
+                    lastName = person.LastName,
+                    email = person.Email,
+                    departmentID = person.DepartmentID,
+                    folderPath = person.FolderPath,
+                    username = person.Username,
+                    password = (string)null, // לא מחזירים סיסמה
+                    position = person.Position,
+                    isActive = person.IsActive,
+                    createdDate = person.CreatedDate,
+                    roles = roles // הוספת התפקידים!
+                }
+            };
+
+            return Ok(response);
         }
 
-        [HttpPost("logout")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Logout()
-        {
-            var currentUserId = User?.Identity?.Name ?? "Anonymous";
-
-
-            return Ok(new { Message = "Logout successful" });
-        }
-
-        private string GenerateJwtToken(Person person)
+        private string GenerateJwtToken(Person person, List<Role> roles)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            var roleService = new RoleService(_configuration);
-            var roles = roleService.GetPersonRoles(person.PersonId);
-
             var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, person.PersonId),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.Name, person.PersonId),
-                new Claim("personId", person.PersonId)
-            };
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, person.PersonId),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(ClaimTypes.Name, person.PersonId),
+        new Claim("personId", person.PersonId)
+    };
 
             foreach (var role in roles)
             {

@@ -31,7 +31,7 @@ namespace FinalProject.DAL.Repositories
                     {
                         PermissionId = Convert.ToInt32(dataReader["PremisionId"]),
                         SectionID = Convert.ToInt32(dataReader["SectionID"]),
-                        ResponsiblePerson = dataReader["ResposiblePerson"].ToString(),
+                        ResponsiblePerson = dataReader["ResponsiblePerson"].ToString(),
                         CanView = Convert.ToBoolean(dataReader["CanView"]),
                         CanEdit = Convert.ToBoolean(dataReader["CanEdit"]),
                         CanEvaluate = Convert.ToBoolean(dataReader["CanEvaluate"])
@@ -65,7 +65,7 @@ namespace FinalProject.DAL.Repositories
                     {
                         PermissionId = Convert.ToInt32(dataReader["PremisionId"]),
                         SectionID = Convert.ToInt32(dataReader["SectionID"]),
-                        ResponsiblePerson = dataReader["ResposiblePerson"].ToString(),
+                        ResponsiblePerson = dataReader["ResponsiblePerson"].ToString(),
                         CanView = Convert.ToBoolean(dataReader["CanView"]),
                         CanEdit = Convert.ToBoolean(dataReader["CanEdit"]),
                         CanEvaluate = Convert.ToBoolean(dataReader["CanEvaluate"])
