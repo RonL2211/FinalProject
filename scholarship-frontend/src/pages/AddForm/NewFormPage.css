@@ -1,5 +1,4 @@
-
-/* עיצוב כללי */
+/* 
 .section-card {
   transition: all 0.3s ease;
   border-radius: 8px;
@@ -9,7 +8,6 @@
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
-/* עיצוב חלוקת השלבים */
 .step-progress {
   margin-bottom: 25px;
 }
@@ -18,7 +16,6 @@
   min-height: 400px;
 }
 
-/* עיצוב שדות */
 .field-options {
   background-color: #f8f9fa;
   padding: 15px;
@@ -26,7 +23,6 @@
   margin-top: 15px;
 }
 
-/* עיצוב טאבים */
 .nav-tabs .nav-link {
   color: #6c757d;
   font-weight: 500;
@@ -37,14 +33,12 @@
   font-weight: 600;
 }
 
-/* התראות */
 .alert-light {
   background-color: #f8f9fa;
   border-color: #e9ecef;
   color: #6c757d;
 }
 
-/* הנפשות */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -54,7 +48,6 @@
   animation: fadeIn 0.3s ease-in;
 }
 
-/* עיצוב אלמנטים ברמות שונות */
 .section-summary {
   border-bottom: 1px solid #dee2e6;
   padding-bottom: 15px;
@@ -63,3 +56,4 @@
 .section-summary:last-child {
   border-bottom: none;
 }
+ */
