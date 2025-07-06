@@ -15,8 +15,8 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { getToken } from "../services/authService";
-import LoadingSpinner from "./NEW-110625/LoadingSpinner";
-import EmptyState from "./NEW-110625/EmptyState";
+import LoadingSpinner from "./form-add/LoadingSpinner";
+import EmptyState from "./form-add/EmptyState";
 
 const LecturerFormsPage = () => {
   const [forms, setForms] = useState([]);

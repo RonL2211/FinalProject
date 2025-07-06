@@ -1,0 +1,87 @@
+:root {
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --success-color: #198754;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #0dcaf0;
+  --light-color: #f8f9fa;
+  --dark-color: #212529;
+}
+
+body {
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+  direction: rtl;
+  text-align: right;
+}
+
+/* RTL Support */
+.navbar-nav {
+  direction: rtl;
+}
+
+.dropdown-menu {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Custom Bootstrap RTL fixes */
+.me-auto {
+  margin-left: auto !important;
+}
+
+.ms-auto {
+  margin-right: auto !important;
+}
+
+/* Loading states */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* Form animations */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom card hover effects */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Status badges */
+.status-draft { background-color: var(--secondary-color) !important; }
+.status-submitted { background-color: var(--info-color) !important; }
+.status-approved { background-color: var(--success-color) !important; }
+.status-rejected { background-color: var(--danger-color) !important; }
+.status-under-appeal { background-color: var(--warning-color) !important; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 15px;
+  }
+  
+  .card-body {
+    padding: 1rem !important;
+  }
+}
