@@ -10,12 +10,12 @@ import LoadingSpinner from './components/UI/LoadingSpinner';
 import LoginPage from './pages/Auth/LoginPage';
 
 // // Manager Pages (מנהל סטודנטים)
-// import ManagerDashboard from './pages/Manager/Dashboard';
-// import FormsManagement from './pages/Manager/FormsManagement';
-// import FormBuilder from './pages/Manager/FormBuilder';
-// import FormEditor from './pages/Manager/FormEditor';
-// import ReviewAppeals from './pages/Manager/ReviewAppeals';
-// import UsersManagement from './pages/Manager/UsersManagement';
+import ManagerDashboard from './pages/Manager/ManagerDashboard';
+import FormsManagement from './pages/Manager/FormsManagement';
+import FormBuilder from './pages/Manager/FormBuilder';
+import FormEditor from './pages/Manager/FormEditor';
+import ReviewAppeals from './pages/Manager/ReviewAppeals';
+import UsersManagement from './pages/Manager/UsersManagement';
 
 // Dean Pages (דיקאן)
 import DeanDashboard from './pages/Dean/Dashboard';
@@ -73,32 +73,32 @@ const AppRouter = () => {
           {/* Manager Routes (מנהל סטודנטים) */}
           <Route path="/manager" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              {/* <ManagerDashboard /> */}
+              <ManagerDashboard />
             </ProtectedRoute>
           } />
           <Route path="/manager/forms" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              {/* <FormsManagement /> */}
+              <FormsManagement />
             </ProtectedRoute>
           } />
           <Route path="/manager/forms/new" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              {/* <FormBuilder /> */}
+              <FormBuilder />
             </ProtectedRoute>
           } />
           <Route path="/manager/forms/edit/:id" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              {/* <FormEditor /> */}
+              <FormEditor />
             </ProtectedRoute>
           } />
           <Route path="/manager/appeals" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              {/* <ReviewAppeals /> */}
+              <ReviewAppeals />
             </ProtectedRoute>
           } />
           <Route path="/manager/users" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              {/* <UsersManagement /> */}
+              <UsersManagement />
             </ProtectedRoute>
           } />
 
