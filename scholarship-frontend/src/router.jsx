@@ -12,8 +12,9 @@ import LoginPage from './pages/Auth/LoginPage';
 // // Manager Pages (מנהל סטודנטים)
 import ManagerDashboard from './pages/Manager/ManagerDashboard';
 import FormsManagement from './pages/Manager/FormsManagement';
-import FormBuilder from './pages/Manager/FormBuilder';
-import FormEditor from './pages/Manager/FormEditor';
+import UnifiedFormBuilder from './pages/Manager/UnifiedFormBuilder';
+// import FormBuilder from './pages/Manager/FormBuilder';
+// import FormEditor from './pages/Manager/FormEditor';
 import ReviewAppeals from './pages/Manager/ReviewAppeals';
 import UsersManagement from './pages/Manager/UsersManagement';
 
@@ -83,12 +84,14 @@ const AppRouter = () => {
           } />
           <Route path="/manager/forms/new" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <FormBuilder />
+              {/* <FormBuilder /> */}
+              <UnifiedFormBuilder mode="create" />
             </ProtectedRoute>
           } />
           <Route path="/manager/forms/edit/:id" element={
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <FormEditor />
+              {/* <FormEditor /> */}
+              <UnifiedFormBuilder mode="edit" />
             </ProtectedRoute>
           } />
           <Route path="/manager/appeals" element={
