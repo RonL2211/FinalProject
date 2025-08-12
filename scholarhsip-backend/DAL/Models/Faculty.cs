@@ -1,8 +1,8 @@
-﻿namespace FinalProject.DAL.Models
-{
-    public class Faculty
+﻿    namespace FinalProject.DAL.Models
     {
-        public int FacultyID { get; set; }
-        public string FacultyName { get; set; }
+        public class Faculty
+        {
+            public int FacultyID { get; set; }
+            public string FacultyName { get; set; }
+        }
     }
-}
