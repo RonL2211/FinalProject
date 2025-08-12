@@ -120,10 +120,11 @@ namespace FinalProject.BL.Services
 
             var allSections = _sectionRepository.GetSectionsByFormId(formId);
 
-            // ארגון הסעיפים בצורה היררכית
-            var rootSections = allSections.Where(s => s.ParentSectionID == null).OrderBy(s => s.OrderIndex).ToList();
+            //// ארגון הסעיפים בצורה היררכית
+            //var rootSections = allSections.Where(s => s.ParentSectionID == null).OrderBy(s => s.OrderIndex).ToList();
 
-            return rootSections;
+            return allSections.OrderBy(s => s.OrderIndex).ToList(); // מחזיר את כל הסעיפים!
+
         }
 
         public Dictionary<int, List<FormSection>> GetFormSectionHierarchy(int formId)
