@@ -1,4 +1,4 @@
-// src/pages/Lecturer/FillForm.jsx
+// src/pages/Lecturer/FillForm.jsx - תיקון מלא
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Form, Alert, Modal, Accordion } from 'react-bootstrap';
@@ -38,12 +38,66 @@ const FillForm = () => {
       const form = await formService.getFormById(formId);
       setFormData(form);
 
-      // טעינת מבנה הטופס
-      const structure = await formService.getFormStructure(formId);
-      setFormStructure(structure);
+      // תיקון: טעינת מבנה הטופס בצורה נכונה
+      try {
+        // נסה קודם את השיטה הישנה
+        const structure = await formService.getFormStructure(formId);
+        console.log('Form structure loaded:', structure);
+        setFormStructure(structure);
+      } catch (structureError) {
+        console.warn('Failed to load form structure, trying alternative method...');
+        
+        // אם לא עובד, נסה endpoint חלופי
+        try {
+          const response = await api.get(`/Form/${formId}/complete`);
+          if (response.data?.sections) {
+            setFormStructure(response.data.sections);
+          } else {
+            // אם גם זה לא עובד, נסה להביא סעיפים בלבד
+            const sectionsResponse = await api.get(`/FormSection/byForm/${formId}`);
+            const sections = sectionsResponse.data || [];
+            
+            // טען שדות לכל סעיף
+            const sectionsWithFields = await Promise.all(
+              sections.map(async (section) => {
+                try {
+                  const fieldsResponse = await api.get(`/SectionField/bySection/${section.sectionID}`);
+                  
+                  // טען אפשרויות לשדות שצריכים
+                  const fields = await Promise.all(
+                    (fieldsResponse.data || []).map(async (field) => {
+                      if (['Select', 'Radio', 'Checkbox'].includes(field.fieldType)) {
+                        try {
+                          const optionsResponse = await api.get(`/FieldOption/byField/${field.fieldID}`);
+                          return { ...field, options: optionsResponse.data || [] };
+                        } catch (err) {
+                          console.warn(`No options for field ${field.fieldID}`);
+                          return field;
+                        }
+                      }
+                      return field;
+                    })
+                  );
+                  
+                  return { ...section, fields };
+                } catch (err) {
+                  console.warn(`Could not load fields for section ${section.sectionID}`);
+                  return { ...section, fields: [] };
+                }
+              })
+            );
+            
+            setFormStructure(sectionsWithFields);
+          }
+        } catch (altError) {
+          console.error('All methods to load form structure failed:', altError);
+          setFormStructure([]);
+        }
+      }
 
-      // אם זה עריכת מופע קיים
+      // תיקון: טיפול נכון במופעים - בדוק אם כבר יש מופע לפני יצירת חדש
       if (instanceId) {
+        // עריכת מופע קיים
         const instance = await instanceService.getInstanceById(instanceId);
         if (instance.userID !== user.personId) {
           throw new Error('אין הרשאה לערוך מופע זה');
@@ -55,19 +109,59 @@ const FillForm = () => {
           const existingAnswers = await instanceService.getInstanceAnswers(instanceId);
           const answersMap = {};
           existingAnswers.forEach(answer => {
-            answersMap[answer.fieldID] = answer.answerValue;
+            answersMap[answer.fieldID] = answer.answerValue || answer.value;
           });
           setAnswers(answersMap);
         } catch (err) {
           console.log('No existing answers found');
         }
       } else {
-        // יצירת מופע חדש
-        const newInstance = await instanceService.createInstance(formId);
-        setCurrentInstance(newInstance);
+        // תיקון: בדוק אם כבר יש מופע פעיל למשתמש לפני יצירת חדש
+        try {
+          // נסה לקבל מופעים של המשתמש לטופס הזה
+          const userInstances = await instanceService.getUserInstances(user.personId);
+          const existingInstance = userInstances.find(inst => 
+            inst.formId === parseInt(formId) && 
+            ['Draft', 'Submitted'].includes(inst.currentStage)
+          );
+
+          if (existingInstance) {
+            // יש כבר מופע - השתמש בו
+            console.log('Found existing instance:', existingInstance);
+            setCurrentInstance(existingInstance);
+            
+            // טען תשובות קיימות אם יש
+            try {
+              const existingAnswers = await instanceService.getInstanceAnswers(existingInstance.instanceId);
+              const answersMap = {};
+              existingAnswers.forEach(answer => {
+                answersMap[answer.fieldID] = answer.answerValue || answer.value;
+              });
+              setAnswers(answersMap);
+            } catch (err) {
+              console.log('No existing answers in instance');
+            }
+          } else {
+            // אין מופע קיים - צור חדש
+            console.log('Creating new instance...');
+            const newInstance = await instanceService.createInstance(formId);
+            setCurrentInstance(newInstance);
+          }
+        } catch (checkError) {
+          console.error('Error checking existing instances:', checkError);
+          // אם לא הצלחנו לבדוק, נסה ליצור חדש
+          try {
+            const newInstance = await instanceService.createInstance(formId);
+            setCurrentInstance(newInstance);
+          } catch (createError) {
+            // אם יצירה נכשלה, כנראה כבר יש מופע
+            throw new Error('כבר קיים מופע פעיל לטופס זה. אנא בדוק בדף "הטפסים שלי".');
+          }
+        }
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Error in loadFormData:', err);
+      setError(err.message || 'שגיאה בטעינת הטופס');
     } finally {
       setLoading(false);
     }
@@ -81,22 +175,29 @@ const FillForm = () => {
   };
 
   const saveProgress = async () => {
-    if (!currentInstance) return;
+    if (!currentInstance) {
+      setError('לא נמצא מופע טופס לשמירה');
+      return;
+    }
 
     setSaving(true);
     try {
-      // שמירת התשובות
+      // הכן את התשובות לשמירה
       const answersArray = Object.entries(answers).map(([fieldId, value]) => ({
         fieldID: parseInt(fieldId),
-        answerValue: value
+        answerValue: value || '',
+        value: value || '' // לתמיכה אחורה
       }));
 
+      console.log('Saving answers:', answersArray);
       await instanceService.saveFieldAnswers(currentInstance.instanceId, answersArray);
       
       // הצגת הודעת הצלחה
       setError('');
-      // יכול להוסיף toast notification כאן
+      // אפשר להוסיף toast notification
+      alert('השינויים נשמרו בהצלחה!');
     } catch (err) {
+      console.error('Save error:', err);
       setError(`שגיאה בשמירה: ${err.message}`);
     } finally {
       setSaving(false);
@@ -104,7 +205,10 @@ const FillForm = () => {
   };
 
   const handleSubmit = async () => {
-    if (!currentInstance) return;
+    if (!currentInstance) {
+      setError('לא נמצא מופע טופס להגשה');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -119,6 +223,7 @@ const FillForm = () => {
         state: { message: 'הטופס הוגש בהצלחה!' }
       });
     } catch (err) {
+      console.error('Submit error:', err);
       setError(`שגיאה בהגשה: ${err.message}`);
     } finally {
       setSubmitting(false);
@@ -136,7 +241,7 @@ const FillForm = () => {
             type="text"
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.fieldID, e.target.value)}
-            placeholder={field.placeholder}
+            placeholder={field.placeholder || field.helpText}
             required={field.isRequired}
           />
         );
@@ -148,7 +253,7 @@ const FillForm = () => {
             rows={3}
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.fieldID, e.target.value)}
-            placeholder={field.placeholder}
+            placeholder={field.placeholder || field.helpText}
             required={field.isRequired}
           />
         );
@@ -159,7 +264,7 @@ const FillForm = () => {
             type="number"
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.fieldID, e.target.value)}
-            placeholder={field.placeholder}
+            placeholder={field.placeholder || field.helpText}
             min={field.minValue}
             max={field.maxValue}
             required={field.isRequired}
@@ -233,17 +338,131 @@ const FillForm = () => {
           />
         );
 
+      case 'File':
+        return (
+          <Form.Control
+            type="file"
+            onChange={(e) => {
+              // TODO: implement file upload
+              console.log('File selected:', e.target.files[0]);
+            }}
+            required={field.isRequired}
+          />
+        );
+
       default:
         return (
           <Form.Control
             type="text"
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.fieldID, e.target.value)}
-            placeholder={field.placeholder}
+            placeholder={field.placeholder || field.helpText}
             required={field.isRequired}
           />
         );
     }
+  };
+
+  // פונקציה לרנדור סעיפים עם תתי-סעיפים
+  const renderSection = (section, index) => {
+    return (
+      <Accordion.Item key={section.sectionID} eventKey={index.toString()}>
+        <Accordion.Header>
+          <div className="w-100">
+            <strong>{section.title}</strong>
+            {section.description && (
+              <div className="small text-muted">{section.description}</div>
+            )}
+          </div>
+        </Accordion.Header>
+        <Accordion.Body>
+          {section.explanation && (
+            <Alert variant="info" className="mb-3">
+              <small>{section.explanation}</small>
+            </Alert>
+          )}
+          
+          {/* רנדור שדות של הסעיף */}
+          {Array.isArray(section.fields) && section.fields.length > 0 && (
+            <div className="mb-4">
+              {section.fields.map(field => (
+                <Form.Group key={field.fieldID} className="mb-3">
+                  <Form.Label className="fw-bold">
+                    {field.fieldLabel}
+                    {field.isRequired && <span className="text-danger ms-1">*</span>}
+                  </Form.Label>
+                  
+                  {field.helpText && (
+                    <Form.Text className="d-block mb-2 text-muted">
+                      {field.helpText}
+                    </Form.Text>
+                  )}
+                  
+                  {renderField(field)}
+                </Form.Group>
+              ))}
+            </div>
+          )}
+          
+          {/* רנדור תתי-סעיפים אם יש */}
+          {Array.isArray(section.subSections) && section.subSections.length > 0 && (
+            <div className="ms-4">
+              <h6 className="text-secondary mb-3">תתי-סעיפים:</h6>
+              {section.subSections.map((subSection, subIndex) => (
+                <Card key={subSection.sectionID} className="mb-3">
+                  <Card.Header className="bg-light">
+                    <strong>{subSection.title}</strong>
+                    {subSection.description && (
+                      <div className="small text-muted">{subSection.description}</div>
+                    )}
+                  </Card.Header>
+                  <Card.Body>
+                    {subSection.explanation && (
+                      <Alert variant="info" className="mb-3">
+                        <small>{subSection.explanation}</small>
+                      </Alert>
+                    )}
+                    
+                    {Array.isArray(subSection.fields) && subSection.fields.map(field => (
+                      <Form.Group key={field.fieldID} className="mb-3">
+                        <Form.Label className="fw-bold">
+                          {field.fieldLabel}
+                          {field.isRequired && <span className="text-danger ms-1">*</span>}
+                        </Form.Label>
+                        
+                        {field.helpText && (
+                          <Form.Text className="d-block mb-2 text-muted">
+                            {field.helpText}
+                          </Form.Text>
+                        )}
+                        
+                        {renderField(field)}
+                      </Form.Group>
+                    ))}
+                    
+                    {(!subSection.fields || subSection.fields.length === 0) && (
+                      <div className="text-muted text-center py-2">
+                        <i className="bi bi-info-circle me-1"></i>
+                        אין שדות בתת-סעיף זה
+                      </div>
+                    )}
+                  </Card.Body>
+                </Card>
+              ))}
+            </div>
+          )}
+          
+          {/* אם אין שדות ואין תתי-סעיפים */}
+          {(!section.fields || section.fields.length === 0) && 
+           (!section.subSections || section.subSections.length === 0) && (
+            <div className="text-muted text-center py-3">
+              <i className="bi bi-info-circle me-1"></i>
+              אין תוכן בסעיף זה
+            </div>
+          )}
+        </Accordion.Body>
+      </Accordion.Item>
+    );
   };
 
   if (loading) return <LoadingSpinner message="טוען את הטופס..." />;
@@ -256,8 +475,26 @@ const FillForm = () => {
     );
   }
 
-  // תיקון: וידוא ש-formStructure הוא מערך
+  // וידוא ש-formStructure הוא מערך
   const safeFormStructure = Array.isArray(formStructure) ? formStructure : [];
+
+  // חישוב מספר השדות הכולל
+  const getTotalFields = () => {
+    let total = 0;
+    safeFormStructure.forEach(section => {
+      if (Array.isArray(section.fields)) {
+        total += section.fields.length;
+      }
+      if (Array.isArray(section.subSections)) {
+        section.subSections.forEach(subSection => {
+          if (Array.isArray(subSection.fields)) {
+            total += subSection.fields.length;
+          }
+        });
+      }
+    });
+    return total;
+  };
 
   return (
     <Container>
@@ -268,6 +505,12 @@ const FillForm = () => {
             <div>
               <h2>{formData?.formName}</h2>
               <p className="text-muted">{formData?.description}</p>
+              {formData?.instructions && (
+                <Alert variant="secondary">
+                  <i className="bi bi-info-circle me-2"></i>
+                  {formData.instructions}
+                </Alert>
+              )}
             </div>
             <div>
               <Button variant="outline-secondary" onClick={() => navigate(-1)} className="me-2">
@@ -282,7 +525,9 @@ const FillForm = () => {
       {error && (
         <Row className="mb-4">
           <Col>
-            <Alert variant="danger">{error}</Alert>
+            <Alert variant="danger" dismissible onClose={() => setError('')}>
+              {error}
+            </Alert>
           </Col>
         </Row>
       )}
@@ -296,56 +541,16 @@ const FillForm = () => {
                 <div className="text-center py-5">
                   <i className="bi bi-clipboard-x text-muted" style={{ fontSize: '3rem' }}></i>
                   <h4 className="mt-3 text-muted">הטופס ריק</h4>
-                  <p className="text-muted">אין שדות בטופס זה</p>
+                  <p className="text-muted">אין סעיפים או שדות בטופס זה</p>
+                  <Button variant="outline-primary" onClick={loadFormData}>
+                    <i className="bi bi-arrow-clockwise me-2"></i>
+                    נסה לטעון שוב
+                  </Button>
                 </div>
               ) : (
                 <Form>
                   <Accordion defaultActiveKey="0">
-                    {safeFormStructure.map((section, index) => (
-                      <Accordion.Item key={section.sectionID} eventKey={index.toString()}>
-                        <Accordion.Header>
-                          <div>
-                            <strong>{section.title}</strong>
-                            {section.description && (
-                              <div className="small text-muted">{section.description}</div>
-                            )}
-                          </div>
-                        </Accordion.Header>
-                        <Accordion.Body>
-                          {section.explanation && (
-                            <Alert variant="info" className="mb-3">
-                              <small>{section.explanation}</small>
-                            </Alert>
-                          )}
-                          
-                          {/* תיקון: וידוא ש-fields הוא מערך */}
-                          {Array.isArray(section.fields) && section.fields.map(field => (
-                            <Form.Group key={field.fieldID} className="mb-3">
-                              <Form.Label className="fw-bold">
-                                {field.fieldLabel}
-                                {field.isRequired && <span className="text-danger ms-1">*</span>}
-                              </Form.Label>
-                              
-                              {field.description && (
-                                <Form.Text className="d-block mb-2 text-muted">
-                                  {field.description}
-                                </Form.Text>
-                              )}
-                              
-                              {renderField(field)}
-                            </Form.Group>
-                          ))}
-                          
-                          {/* אם אין שדות בסעיף */}
-                          {(!section.fields || section.fields.length === 0) && (
-                            <div className="text-muted text-center py-3">
-                              <i className="bi bi-info-circle me-1"></i>
-                              אין שדות בסעיף זה
-                            </div>
-                          )}
-                        </Accordion.Body>
-                      </Accordion.Item>
-                    ))}
+                    {safeFormStructure.map((section, index) => renderSection(section, index))}
                   </Accordion>
                 </Form>
               )}
@@ -364,7 +569,7 @@ const FillForm = () => {
                 <Button
                   variant="secondary"
                   onClick={saveProgress}
-                  disabled={saving}
+                  disabled={saving || !currentInstance}
                 >
                   {saving ? (
                     <>
@@ -382,7 +587,7 @@ const FillForm = () => {
                 <Button
                   variant="primary"
                   onClick={() => setShowSubmitModal(true)}
-                  disabled={submitting || Object.keys(answers).length === 0}
+                  disabled={submitting || Object.keys(answers).length === 0 || !currentInstance}
                 >
                   <i className="bi bi-send me-2"></i>
                   הגש טופס
@@ -393,13 +598,19 @@ const FillForm = () => {
 
               <div className="small">
                 <div className="d-flex justify-content-between mb-2">
-                  <span>שדות מולאו:</span>
-                  <span>{Object.keys(answers).length}</span>
+                  <span>שדות שמולאו:</span>
+                  <span className="badge bg-primary">{Object.keys(answers).length}</span>
                 </div>
-                <div className="d-flex justify-content-between">
-                  <span>סך שדות:</span>
-                  <span>{safeFormStructure.reduce((acc, section) => acc + (Array.isArray(section.fields) ? section.fields.length : 0), 0)}</span>
+                <div className="d-flex justify-content-between mb-2">
+                  <span>סך הכל שדות:</span>
+                  <span className="badge bg-secondary">{getTotalFields()}</span>
                 </div>
+                {currentInstance && (
+                  <div className="d-flex justify-content-between">
+                    <span>מזהה מופע:</span>
+                    <span className="text-muted">#{currentInstance.instanceId}</span>
+                  </div>
+                )}
               </div>
             </Card.Body>
           </Card>

@@ -119,11 +119,7 @@ namespace FinalProject.BL.Services
                 throw new ArgumentException("Form ID must be greater than zero");
 
             var allSections = _sectionRepository.GetSectionsByFormId(formId);
-
-            //// ארגון הסעיפים בצורה היררכית
-            //var rootSections = allSections.Where(s => s.ParentSectionID == null).OrderBy(s => s.OrderIndex).ToList();
-
-            return allSections.OrderBy(s => s.OrderIndex).ToList(); // מחזיר את כל הסעיפים!
+            return allSections.OrderBy(s => s.OrderIndex).ToList();
 
         }
 

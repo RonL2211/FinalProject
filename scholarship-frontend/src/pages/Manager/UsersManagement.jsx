@@ -1,9 +1,10 @@
 // src/pages/Manager/UsersManagement.jsx
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Table, Modal, Form, Alert, Dropdown, InputGroup, Tabs, Tab } from 'react-bootstrap';
-import { userService } from '../../services/userService';
+import { userManagementHelpers, userService } from '../../services/userService';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorAlert from '../../components/UI/ErrorAlert';
+import Swal from 'sweetalert2';
 
 const UsersManagement = () => {
   const [users, setUsers] = useState([]);
@@ -16,7 +17,8 @@ const UsersManagement = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
-  
+  const [departments, setDepartments] = useState([]);
+
   // Form data
   const [userForm, setUserForm] = useState({
     personId: '',
@@ -42,44 +44,63 @@ const UsersManagement = () => {
     filterUsers();
   }, [users, searchTerm, roleFilter, statusFilter, sortBy]);
 
+  // const loadData = async () => {
+  //   setLoading(true);
+  //   setError('');
+
+  //   try {
+  //     const departmentsData = await userService.getAllDepartments();
+  //     setDepartments(departmentsData);
+  //     // טעינת משתמשים
+  //     const usersData = await userService.getAllUsers();
+      
+  //     // טעינת תפקידים לכל משתמש
+  //     const usersWithRoles = await Promise.all(
+  //       usersData.map(async (user) => {
+  //         try {
+  //           const userRoles = await userService.getUserRoles(user.personId);
+  //           return { ...user, roles: userRoles };
+  //         } catch (err) {
+  //           return { ...user, roles: [] };
+  //         }
+  //       })
+  //     );
+
+  //     setUsers(usersWithRoles);
+      
+  //     // טעינת רשימת התפקידים האפשריים 
+  //     setRoles([
+  //       { roleID: 1, roleName: 'מרצה' },
+  //       { roleID: 2, roleName: 'ראש התמחות' },
+  //       { roleID: 3, roleName: 'ראש מחלקה' },
+  //       { roleID: 4, roleName: 'דיקאן' },
+  //       { roleID: 5, roleName: 'מנהל סטודנטים' }
+  //     ]);
+
+  //   } catch (err) {
+  //     setError(err.message);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const loadData = async () => {
-    setLoading(true);
-    setError('');
+  setLoading(true);
+  setError('');
 
-    try {
-      // טעינת משתמשים
-      const usersData = await userService.getAllUsers();
-      
-      // טעינת תפקידים לכל משתמש
-      const usersWithRoles = await Promise.all(
-        usersData.map(async (user) => {
-          try {
-            const userRoles = await userService.getUserRoles(user.personId);
-            return { ...user, roles: userRoles };
-          } catch (err) {
-            return { ...user, roles: [] };
-          }
-        })
-      );
+  try {
+    const data = await userManagementHelpers.loadUsersData();
+    
+    setDepartments(data.departments);
+    setUsers(data.users);
+    setRoles(data.roles);
 
-      setUsers(usersWithRoles);
-      
-      // טעינת רשימת התפקידים האפשריים (mock data)
-      setRoles([
-        { roleID: 1, roleName: 'מרצה' },
-        { roleID: 2, roleName: 'ראש התמחות' },
-        { roleID: 3, roleName: 'ראש מחלקה' },
-        { roleID: 4, roleName: 'דיקאן' },
-        { roleID: 5, roleName: 'מנהל סטודנטים' }
-      ]);
-
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
   const filterUsers = () => {
     let filtered = [...users];
 
@@ -152,7 +173,10 @@ const UsersManagement = () => {
       email: user.email || '',
       position: user.position || '',
       departmentID: user.departmentID || '',
-      isActive: user.isActive
+      isActive: user.isActive,
+      password: user.password || '',
+      username: user.username || '',
+      folderPath: user.folderPath || '',
     });
     setSelectedUser(user);
     setShowEditModal(true);
@@ -174,6 +198,12 @@ const UsersManagement = () => {
         await userService.addUser?.(userForm) || Promise.resolve();
       }
 
+      Swal.fire({
+        icon: 'success',
+        title: 'המשתמש נשמר בהצלחה',
+        showConfirmButton: false,
+        timer: 1500
+      });
       await loadData();
       setShowEditModal(false);
       setShowAddModal(false);
@@ -445,7 +475,7 @@ const UsersManagement = () => {
                           </td>
                           <td>
                             {user.departmentID ? (
-                              <Badge bg="light" text="dark">{user.departmentID}</Badge>
+                              <Badge bg="light" text="dark">{departments.find(d => d.departmentID === user.departmentID)?.departmentName}</Badge>
                             ) : (
                               <span className="text-muted">לא הוגדר</span>
                             )}

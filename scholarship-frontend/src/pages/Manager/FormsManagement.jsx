@@ -370,7 +370,10 @@ const FormsManagement = () => {
                               <div>
                                 <strong>{form.formName}</strong>
                                 {form.description && (
-                                  <div className="small text-muted text-truncate" style={{ maxWidth: '300px' }}>
+                                  <div
+                                    className="small text-muted text-truncate"
+                                    style={{ maxWidth: "300px" }}
+                                  >
                                     {form.description}
                                   </div>
                                 )}
@@ -379,22 +382,33 @@ const FormsManagement = () => {
                             <td>{getStatusBadge(form)}</td>
                             <td>{formatDate(form.creationDate)}</td>
                             <td>
-                              <Badge bg="info">{stats.totalSubmissions || 0}</Badge>
+                              <Badge bg="info">
+                                {stats.totalSubmissions || 0}
+                              </Badge>
                             </td>
                             <td>
                               <div className="small">
-                                <Badge bg="success" className="me-1">{stats.approved || 0} ✓</Badge>
-                                <Badge bg="warning" className="me-1">{stats.pending || 0} ⏳</Badge>
-                                <Badge bg="danger">{stats.rejected || 0} ✗</Badge>
+                                <Badge bg="success" className="me-1">
+                                  {stats.approved || 0} ✓
+                                </Badge>
+                                <Badge bg="warning" className="me-1">
+                                  {stats.pending || 0} ⏳
+                                </Badge>
+                                <Badge bg="danger">
+                                  {stats.rejected || 0} ✗
+                                </Badge>
                               </div>
                             </td>
                             <td>
                               <Dropdown>
-                                <Dropdown.Toggle variant="outline-secondary" size="sm">
+                                <Dropdown.Toggle
+                                  variant="outline-secondary"
+                                  size="sm"
+                                >
                                   <i className="bi bi-three-dots"></i>
                                 </Dropdown.Toggle>
                                 <Dropdown.Menu>
-                                  <Dropdown.Item 
+                                  <Dropdown.Item
                                     onClick={() => {
                                       setSelectedForm(form);
                                       setShowDetailsModal(true);
@@ -403,18 +417,21 @@ const FormsManagement = () => {
                                     <i className="bi bi-eye me-2"></i>
                                     צפה בפרטים
                                   </Dropdown.Item>
-                                  
-                                  <Dropdown.Item 
-                                    as={Link}
-                                    to={`/manager/forms/edit/${form.formID}`}
-                                  >
-                                    <i className="bi bi-pencil me-2"></i>
-                                    ערוך טופס
-                                  </Dropdown.Item>
 
+                                  {!form.isPublished && (
+                                    <Dropdown.Item
+                                      as={Link}
+                                      to={`/manager/forms/edit/${form.formID}`}
+                                    >
+                                      <i className="bi bi-pencil me-2"></i>
+                                      ערוך טופס
+                                    </Dropdown.Item>
+                                  )}
                                   {form.isActive && !form.isPublished && (
                                     <Dropdown.Item
-                                      onClick={() => handlePublishForm(form.formID)}
+                                      onClick={() =>
+                                        handlePublishForm(form.formID)
+                                      }
                                       disabled={processing}
                                     >
                                       <i className="bi bi-globe me-2"></i>
@@ -423,8 +440,8 @@ const FormsManagement = () => {
                                   )}
 
                                   <Dropdown.Divider />
-                                  
-                                  <Dropdown.Item 
+
+                                  <Dropdown.Item
                                     className="text-danger"
                                     onClick={() => {
                                       setSelectedForm(form);
