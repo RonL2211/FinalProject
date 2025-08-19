@@ -38,6 +38,7 @@ import SubmitAppeal from './pages/Lecturer/SubmitAppeal';
 // Shared Pages
 import UnauthorizedPage from './pages/Shared/UnauthorizedPage';
 import NotFoundPage from './pages/Shared/NotFoundPage';
+import FormViewer from './pages/Manager/FormViewer';
 // import ProfilePage from './pages/Shared/ProfilePage';
 
 const AppRouter = () => {
@@ -92,6 +93,11 @@ const AppRouter = () => {
             <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
               {/* <FormEditor /> */}
               <UnifiedFormBuilder mode="edit" />
+            </ProtectedRoute>
+          } />
+          <Route path="/manager/forms/view/:id" element={
+            <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
+              <FormViewer />
             </ProtectedRoute>
           } />
           <Route path="/manager/appeals" element={

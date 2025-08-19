@@ -44,6 +44,10 @@ const FormsManagement = () => {
       const statsPromises = formsData.map(async (form) => {
         try {
           const instances = await instanceService.getInstancesByFormId?.(form.formID) || [];
+          if(form.formID === 1037) {
+          console.log(form)
+          console.log(instances)
+          }
           return {
             formId: form.formID,
             totalSubmissions: instances.length,
@@ -408,7 +412,7 @@ const FormsManagement = () => {
                                   <i className="bi bi-three-dots"></i>
                                 </Dropdown.Toggle>
                                 <Dropdown.Menu>
-                                  <Dropdown.Item
+                                  {/* <Dropdown.Item
                                     onClick={() => {
                                       setSelectedForm(form);
                                       setShowDetailsModal(true);
@@ -416,8 +420,14 @@ const FormsManagement = () => {
                                   >
                                     <i className="bi bi-eye me-2"></i>
                                     צפה בפרטים
-                                  </Dropdown.Item>
-
+                                  </Dropdown.Item> */}
+<Dropdown.Item
+    as={Link}
+    to={`/manager/forms/view/${form.formID}`}
+  >
+    <i className="bi bi-eye me-2"></i>
+    צפה בטופס המלא
+  </Dropdown.Item>
                                   {!form.isPublished && (
                                     <Dropdown.Item
                                       as={Link}
@@ -538,7 +548,17 @@ const FormsManagement = () => {
           <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
             סגור
           </Button>
-          {selectedForm && (
+<Button 
+    as={Link}
+    to={`/manager/forms/view/${selectedForm?.formID}`}
+    variant="info"
+  >
+    <i className="bi bi-eye me-2"></i>
+    צפה בטופס המלא
+  </Button>
+  
+
+          {selectedForm && !selectedForm.isPublished &&(
             <Button 
               as={Link}
               to={`/manager/forms/edit/${selectedForm.formID}`}

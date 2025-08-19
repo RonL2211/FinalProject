@@ -116,47 +116,67 @@ const FillForm = () => {
           console.log('No existing answers found');
         }
       } else {
-        // תיקון: בדוק אם כבר יש מופע פעיל למשתמש לפני יצירת חדש
+        // תיקון משופר: בדוק אם כבר יש מופע פעיל למשתמש לפני יצירת חדש
         try {
           // נסה לקבל מופעים של המשתמש לטופס הזה
           const userInstances = await instanceService.getUserInstances(user.personId);
           const existingInstance = userInstances.find(inst => 
             inst.formId === parseInt(formId) && 
-            ['Draft', 'Submitted'].includes(inst.currentStage)
+            ['Draft', 'Submitted', 'ApprovedByDepartment', 'ApprovedByDean'].includes(inst.currentStage)
           );
 
           if (existingInstance) {
-            // יש כבר מופע - השתמש בו
+            // יש כבר מופע - בדוק אם זה טיוטה או הוגש
             console.log('Found existing instance:', existingInstance);
-            setCurrentInstance(existingInstance);
             
-            // טען תשובות קיימות אם יש
-            try {
-              const existingAnswers = await instanceService.getInstanceAnswers(existingInstance.instanceId);
-              const answersMap = {};
-              existingAnswers.forEach(answer => {
-                answersMap[answer.fieldID] = answer.answerValue || answer.value;
-              });
-              setAnswers(answersMap);
-            } catch (err) {
-              console.log('No existing answers in instance');
+            if (existingInstance.currentStage === 'Draft') {
+              // טיוטה - אפשר לערוך
+              setCurrentInstance(existingInstance);
+              
+              // טען תשובות קיימות אם יש
+              try {
+                const existingAnswers = await instanceService.getInstanceAnswers(existingInstance.instanceId);
+                const answersMap = {};
+                existingAnswers.forEach(answer => {
+                  answersMap[answer.fieldID] = answer.answerValue || answer.value || answer.Answer;
+                });
+                setAnswers(answersMap);
+              } catch (err) {
+                console.log('No existing answers in instance');
+              }
+            } else {
+              // כבר הוגש - אי אפשר לערוך
+              throw new Error(`הטופס כבר הוגש (סטטוס: ${existingInstance.currentStage}). לא ניתן לערוך טופס שהוגש.`);
             }
           } else {
             // אין מופע קיים - צור חדש
             console.log('Creating new instance...');
-            const newInstance = await instanceService.createInstance(formId);
-            setCurrentInstance(newInstance);
+            try {
+              const newInstance = await instanceService.createInstance(formId);
+              console.log('New instance created:', newInstance);
+              setCurrentInstance(newInstance);
+            } catch (createError) {
+              // בדוק אם השגיאה היא בגלל מופע קיים
+              if (createError.message?.includes('already has an active instance')) {
+                // נסה שוב לטעון את המופעים - אולי יש עיכוב
+                const retryInstances = await instanceService.getUserInstances(user.personId);
+                const retryInstance = retryInstances.find(inst => 
+                  inst.formId === parseInt(formId) && inst.currentStage === 'Draft'
+                );
+                
+                if (retryInstance) {
+                  setCurrentInstance(retryInstance);
+                } else {
+                  throw new Error('נמצא מופע קיים אך לא ניתן לטעון אותו. אנא רענן את הדף.');
+                }
+              } else {
+                throw createError;
+              }
+            }
           }
         } catch (checkError) {
-          console.error('Error checking existing instances:', checkError);
-          // אם לא הצלחנו לבדוק, נסה ליצור חדש
-          try {
-            const newInstance = await instanceService.createInstance(formId);
-            setCurrentInstance(newInstance);
-          } catch (createError) {
-            // אם יצירה נכשלה, כנראה כבר יש מופע
-            throw new Error('כבר קיים מופע פעיל לטופס זה. אנא בדוק בדף "הטפסים שלי".');
-          }
+          console.error('Error in form instance handling:', checkError);
+          throw checkError;
         }
       }
     } catch (err) {
@@ -181,24 +201,30 @@ const FillForm = () => {
     }
 
     setSaving(true);
+    setError(''); // נקה שגיאות קודמות
+    
     try {
       // הכן את התשובות לשמירה
       const answersArray = Object.entries(answers).map(([fieldId, value]) => ({
         fieldID: parseInt(fieldId),
-        answerValue: value || '',
-        value: value || '' // לתמיכה אחורה
+        answerValue: value || ''
       }));
 
       console.log('Saving answers:', answersArray);
+      
+      // שליחה לשרת
       await instanceService.saveFieldAnswers(currentInstance.instanceId, answersArray);
       
       // הצגת הודעת הצלחה
-      setError('');
-      // אפשר להוסיף toast notification
       alert('השינויים נשמרו בהצלחה!');
     } catch (err) {
       console.error('Save error:', err);
-      setError(`שגיאה בשמירה: ${err.message}`);
+      // בדוק אם זו בעיית 404
+      if (err.message?.includes('404') || err.message?.includes('Not Found')) {
+        setError('שגיאה: אין אפשרות לשמור תשובות כרגע. ה-API לשמירת תשובות חסר בשרת.');
+      } else {
+        setError(`שגיאה בשמירה: ${err.message}`);
+      }
     } finally {
       setSaving(false);
     }

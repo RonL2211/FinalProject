@@ -1,7 +1,7 @@
-// src/pages/Lecturer/AvailableForms.jsx
+// src/pages/Lecturer/AvailableForms.jsx - תיקון
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Alert, Form, InputGroup, Badge } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formService } from '../../services/formService';
 import { instanceService } from '../../services/instanceService';
 import { useAuth } from '../../context/AuthContext';
@@ -10,6 +10,7 @@ import ErrorAlert from '../../components/UI/ErrorAlert';
 
 const AvailableForms = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [forms, setForms] = useState([]);
   const [filteredForms, setFilteredForms] = useState([]);
   const [userInstances, setUserInstances] = useState([]);
@@ -60,16 +61,49 @@ const AvailableForms = () => {
     setFilteredForms(filtered);
   };
 
-  const hasActiveInstance = (formId) => {
-    return userInstances.some(instance => 
+  // תיקון: פונקציה משופרת לבדיקת מופע פעיל
+  const getActiveInstance = (formId) => {
+    return userInstances.find(instance => 
       instance.formId === formId && 
-      !['FinalApproved', 'Rejected', 'AppealRejected'].includes(instance.currentStage)
+      ['Draft', 'Submitted', 'ApprovedByDepartment', 'ApprovedByDean', 'UnderAppeal'].includes(instance.currentStage)
     );
+  };
+
+  const hasActiveInstance = (formId) => {
+    return !!getActiveInstance(formId);
   };
 
   const getInstanceStatus = (formId) => {
     const instance = userInstances.find(i => i.formId === formId);
     return instance?.currentStage || null;
+  };
+
+  // תיקון: פונקציה לניהול לחיצה על "מלא טופס"
+  const handleFillForm = (formId) => {
+    const existingInstance = getActiveInstance(formId);
+    
+    if (existingInstance) {
+      // אם יש מופע קיים, עבור אליו
+      navigate(`/lecturer/fill/${formId}?instance=${existingInstance.instanceId}`);
+    } else {
+      // אחרת, צור חדש
+      navigate(`/lecturer/fill/${formId}`);
+    }
+  };
+
+  // תיקון: פונקציה לניהול צפייה/עריכה
+  const handleViewEdit = (formId) => {
+    const instance = getActiveInstance(formId);
+    
+    if (instance) {
+      if (instance.currentStage === 'Draft') {
+        // טיוטה - אפשר לערוך
+        navigate(`/lecturer/fill/${formId}?instance=${instance.instanceId}`);
+      } else {
+        // הוגש - רק צפייה
+        navigate(`/lecturer/my-forms#form-${instance.instanceId}`);
+      }
+    }
   };
 
   if (loading) return <LoadingSpinner message="טוען טפסים זמינים..." />;
@@ -137,8 +171,10 @@ const AvailableForms = () => {
           </Col>
         ) : (
           filteredForms.map((form) => {
-            const hasActive = hasActiveInstance(form.formID);
-            const status = getInstanceStatus(form.formID);
+            const activeInstance = getActiveInstance(form.formID);
+            const hasActive = !!activeInstance;
+            const status = activeInstance?.currentStage;
+            const isDraft = status === 'Draft';
 
             return (
               <Col key={form.formID} lg={6} className="mb-4">
@@ -156,6 +192,12 @@ const AvailableForms = () => {
                             <i className="bi bi-calendar me-1"></i>
                             נוצר: {new Date(form.creationDate).toLocaleDateString('he-IL')}
                           </small>
+                          {form.dueDate && (
+                            <small className="text-muted ms-3">
+                              <i className="bi bi-clock me-1"></i>
+                              יש להגיש עד: {new Date(form.dueDate).toLocaleDateString('he-IL')}
+                            </small>
+                          )}
                           {form.academicYear && (
                             <small className="text-muted ms-3">
                               <i className="bi bi-mortarboard me-1"></i>
@@ -166,9 +208,9 @@ const AvailableForms = () => {
 
                         {hasActive && (
                           <div className="mb-3">
-                            <Badge bg="info">
+                            <Badge bg={getStatusBadgeColor(status)}>
                               <i className="bi bi-info-circle me-1"></i>
-                              כבר מולא - סטטוס: {getStatusText(status)}
+                              סטטוס: {getStatusText(status)}
                             </Badge>
                           </div>
                         )}
@@ -176,26 +218,63 @@ const AvailableForms = () => {
                     </Row>
 
                     <div className="d-flex gap-2 justify-content-end">
-                      <Button
-                        as={Link}
-                        to={`/lecturer/fill/${form.formID}`}
-                        variant={hasActive ? "outline-secondary" : "primary"}
-                        disabled={hasActive}
-                      >
-                        <i className="bi bi-pencil me-1"></i>
-                        {hasActive ? "כבר מולא" : "מלא טופס"}
-                      </Button>
-                      
-                      {hasActive && (
+                      {!hasActive ? (
+                        // אין מופע - כפתור מילוי חדש
                         <Button
-                          as={Link}
-                          to={`/lecturer/my-forms#form-${form.formID}`}
-                          variant="outline-info"
-                          size="sm"
+                          variant="primary"
+                          onClick={() => handleFillForm(form.formID)}
                         >
-                          <i className="bi bi-eye me-1"></i>
-                          צפה
+                          <i className="bi bi-pencil me-1"></i>
+                          מלא טופס
                         </Button>
+                      ) : isDraft ? (
+                        // יש טיוטה - כפתור המשך מילוי
+                        <>
+                          <Button
+                            variant="warning"
+                            onClick={() => handleViewEdit(form.formID)}
+                          >
+                            <i className="bi bi-pencil-square me-1"></i>
+                            המשך מילוי טיוטה
+                          </Button>
+                          <Button
+                            variant="outline-info"
+                            size="sm"
+                            onClick={() => navigate('/lecturer/my-forms')}
+                          >
+                            <i className="bi bi-eye me-1"></i>
+                            לטפסים שלי
+                          </Button>
+                        </>
+                      ) : (
+                        // הוגש - כפתורי צפייה וערעור
+                        <>
+                          <Button
+                            variant="outline-secondary"
+                            disabled
+                          >
+                            <i className="bi bi-check-circle me-1"></i>
+                            הטופס הוגש
+                          </Button>
+                          <Button
+                            variant="outline-info"
+                            size="sm"
+                            onClick={() => handleViewEdit(form.formID)}
+                          >
+                            <i className="bi bi-eye me-1"></i>
+                            צפה
+                          </Button>
+                          {status === 'Rejected' && (
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => navigate(`/lecturer/appeal/${activeInstance.instanceId}`)}
+                            >
+                              <i className="bi bi-exclamation-triangle me-1"></i>
+                              הגש ערעור
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   </Card.Body>
@@ -209,6 +288,7 @@ const AvailableForms = () => {
   );
 };
 
+// פונקציות עזר
 const getStatusText = (status) => {
   const statusMap = {
     'Draft': 'טיוטה',
@@ -222,6 +302,21 @@ const getStatusText = (status) => {
     'AppealRejected': 'ערעור נדחה'
   };
   return statusMap[status] || status;
+};
+
+const getStatusBadgeColor = (status) => {
+  const colorMap = {
+    'Draft': 'warning',
+    'Submitted': 'info',
+    'ApprovedByDepartment': 'primary',
+    'ApprovedByDean': 'primary',
+    'FinalApproved': 'success',
+    'Rejected': 'danger',
+    'UnderAppeal': 'secondary',
+    'AppealApproved': 'success',
+    'AppealRejected': 'danger'
+  };
+  return colorMap[status] || 'secondary';
 };
 
 export default AvailableForms;

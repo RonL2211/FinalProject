@@ -27,7 +27,10 @@ const UsersManagement = () => {
     email: '',
     position: '',
     departmentID: '',
-    isActive: true
+    isActive: true,
+    password: '',
+    username: '',
+    folderPath: ''
   });
 
   // Filters
@@ -147,6 +150,49 @@ const UsersManagement = () => {
 
     setFilteredUsers(filtered);
   };
+  const generateUsername = () => {
+  // מציאת המספר הבא הזמין
+  const existingNumbers = users
+    .map(user => user.username?.match(/^user(\d+)$/)?.[1])
+    .filter(Boolean)
+    .map(Number)
+    .sort((a, b) => a - b);
+  
+  let nextNumber = 1;
+  for (let i = 0; i < existingNumbers.length; i++) {
+    if (existingNumbers[i] !== nextNumber) {
+      break;
+    }
+    nextNumber++;
+  }
+  
+  return `user${nextNumber}`;
+};
+
+const generatePassword = () => {
+  return Math.random().toString().slice(2, 10); // 8 ספרות אקראיות
+};
+const handleAddUser = () => {
+  resetUserForm();
+  const newUsername = generateUsername();
+  const newPassword = generatePassword();
+  
+  setUserForm({
+    personId: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    position: '',
+    departmentID: '',
+    isActive: true,
+    password: newPassword,
+    username: newUsername, 
+    folderPath: `/folders/${newUsername}` 
+  });
+  setSelectedUser(null);
+  setShowAddModal(true);
+};
+
 
   const resetUserForm = () => {
     setUserForm({
@@ -156,14 +202,14 @@ const UsersManagement = () => {
       email: '',
       position: '',
       departmentID: '',
-      isActive: true
+      isActive: true,
+       password: '',
+    username: '',
+    folderPath: ''
     });
   };
 
-  const handleAddUser = () => {
-    resetUserForm();
-    setShowAddModal(true);
-  };
+
 
   const handleEditUser = (user) => {
     setUserForm({
@@ -187,7 +233,17 @@ const UsersManagement = () => {
       setError('יש למלא את כל השדות החובה');
       return;
     }
-
+ if (!selectedUser) {
+      if (!userForm.username) {
+        userForm.username = generateUsername();
+      }
+      if (!userForm.password) {
+        userForm.password = generatePassword();
+      }
+      if (!userForm.folderPath) {
+        userForm.folderPath = `/folders/${userForm.username}`;
+      }
+    }
     setProcessing(true);
     try {
       if (selectedUser) {
@@ -557,17 +613,22 @@ const UsersManagement = () => {
                   />
                 </Form.Group>
               </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>מחלקה</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={userForm.departmentID}
-                    onChange={(e) => setUserForm({...userForm, departmentID: e.target.value})}
-                    placeholder="מספר מחלקה"
-                  />
-                </Form.Group>
-              </Col>
+             <Col md={6}>
+  <Form.Group className="mb-3">
+    <Form.Label>מחלקה</Form.Label>
+    <Form.Select
+      value={userForm.departmentID}
+      onChange={(e) => setUserForm({...userForm, departmentID: e.target.value})}
+    >
+      <option value="">בחר מחלקה</option>
+      {departments.map(dept => (
+        <option key={dept.departmentID} value={dept.departmentID}>
+          {dept.departmentName}
+        </option>
+      ))}
+    </Form.Select>
+  </Form.Group>
+</Col>
             </Row>
             <Row>
               <Col md={6}>
@@ -621,6 +682,20 @@ const UsersManagement = () => {
                   </Form.Select>
                 </Form.Group>
               </Col>
+            </Row>
+            <Row>
+              <Col md={4}>
+    <Form.Group className="mb-3">
+      <Form.Label>סיסמה</Form.Label>
+      <Form.Control
+        type="text"
+        value={userForm.password}
+        onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+        placeholder="סיסמה"
+        maxLength="8"
+      />
+    </Form.Group>
+  </Col>
             </Row>
             <Form.Check
               type="checkbox"
