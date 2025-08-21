@@ -434,6 +434,7 @@ const FormViewer = () => {
                       ) : (
                         sections.map((section, sectionIndex) => (
                           <Card key={section.id || sectionIndex} className="mb-4">
+                            {console.log(section)}
                             <Card.Header>
                               <div className="d-flex justify-content-between align-items-center">
                                 <h6 className="mb-0">

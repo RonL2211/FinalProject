@@ -34,12 +34,15 @@ import AvailableForms from './pages/Lecturer/AvailableForms';
 import FillForm from './pages/Lecturer/FillForm';
 import MyForms from './pages/Lecturer/MyForms';
 import SubmitAppeal from './pages/Lecturer/SubmitAppeal';
+import ViewSubmittedForm from './pages/Lecturer/ViewSubmittedForm';
+
 
 // Shared Pages
 import UnauthorizedPage from './pages/Shared/UnauthorizedPage';
 import NotFoundPage from './pages/Shared/NotFoundPage';
 import FormViewer from './pages/Manager/FormViewer';
 // import ProfilePage from './pages/Shared/ProfilePage';
+
 
 const AppRouter = () => {
   const { isAuthenticated, isLoading, getDefaultRoute } = useAuth();
@@ -171,6 +174,11 @@ const AppRouter = () => {
               <SubmitAppeal />
             </ProtectedRoute>
           } />
+          <Route path="/lecturer/view/:instanceId" element={
+  <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
+    <ViewSubmittedForm />
+  </ProtectedRoute>
+} />
 
           {/* Shared Routes */}
           <Route path="/profile" element={

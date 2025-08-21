@@ -6,6 +6,7 @@ import { formService } from '../../services/formService';
 import { instanceService } from '../../services/instanceService';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorAlert from '../../components/UI/ErrorAlert';
+import Swal from 'sweetalert2';
 
 const FormsManagement = () => {
   const navigate = useNavigate();
@@ -142,7 +143,14 @@ const FormsManagement = () => {
     setProcessing(true);
     try {
       await formService.publishForm(formId);
-      await loadForms();
+      Swal.fire({
+        icon: 'success',
+        title: 'פורסם בהצלחה',
+        text: 'הטופס פורסם בהצלחה',
+        confirmButtonText: 'אוקי'
+      }).then(() => {
+       loadForms();
+      });
       setError('');
     } catch (err) {
       setError(err.message);

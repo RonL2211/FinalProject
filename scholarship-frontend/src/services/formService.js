@@ -216,7 +216,7 @@ export const formService = {
         isDefault: optionData.isDefault || false
       };
 
-      const response = await api.post('/FieldOption', requestData);
+      const response = await api.post('/SectionField/options', requestData);
       return response.data;
     } catch (error) {
       console.error('Error creating field option:', error);
@@ -253,7 +253,9 @@ export const formService = {
   // פרסום טופס
   publishForm: async (id) => {
     try {
+      console.log(id, 'Publishing form...');
       const response = await api.post(`/Form/${id}/publish`);
+      console.log('Form published successfully:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error publishing form:', error);
@@ -586,7 +588,7 @@ export const formService = {
   deleteFieldOptions: async (fieldId) => {
     try {
       // מחיקת כל האפשרויות של השדה
-      const response = await api.delete(`/FieldOption/field/${fieldId}`);
+      const response = await api.delete(`/SectionField/options/${fieldId}`);
       return response.data;
     } catch (error) {
       console.error('Error deleting field options:', error);

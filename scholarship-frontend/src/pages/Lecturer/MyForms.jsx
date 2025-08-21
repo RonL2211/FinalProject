@@ -259,33 +259,44 @@ const MyForms = () => {
                             <td>{formatDate(instance.lastModifiedDate)}</td>
                             <td>
                               <Dropdown>
-                                <Dropdown.Toggle variant="outline-secondary" size="sm">
-                                  פעולות
-                                </Dropdown.Toggle>
-                                <Dropdown.Menu>
-                                  <Dropdown.Item onClick={() => handleShowDetails(instance)}>
-                                    <i className="bi bi-eye me-2"></i>
-                                    צפה בפרטים
-                                  </Dropdown.Item>
-                                  
-                                  {statusConfig.canEdit && (
-                                    <Dropdown.Item as={Link} to={`/lecturer/fill/${instance.formId}?instance=${instance.instanceId}`}>
-                                      <i className="bi bi-pencil me-2"></i>
-                                      ערוך
-                                    </Dropdown.Item>
-                                  )}
-                                  
-                                  {statusConfig.canAppeal && (
-                                    <>
-                                      <Dropdown.Divider />
-                                      <Dropdown.Item as={Link} to={`/lecturer/appeal/${instance.instanceId}`}>
-                                        <i className="bi bi-megaphone me-2"></i>
-                                        הגש ערעור
-                                      </Dropdown.Item>
-                                    </>
-                                  )}
-                                </Dropdown.Menu>
-                              </Dropdown>
+  <Dropdown.Toggle variant="outline-secondary" size="sm">
+    פעולות
+  </Dropdown.Toggle>
+  <Dropdown.Menu>
+    {/* צפייה בפרטים בסיסיים */}
+    <Dropdown.Item onClick={() => handleShowDetails(instance)}>
+      <i className="bi bi-info-circle me-2"></i>
+      פרטי מופע
+    </Dropdown.Item>
+    
+    {/* צפייה בטופס המלא עם התשובות */}
+    {instance.currentStage !== 'Draft' && (
+      <Dropdown.Item as={Link} to={`/lecturer/view/${instance.instanceId}`}>
+        <i className="bi bi-eye me-2"></i>
+        צפה בטופס המלא
+      </Dropdown.Item>
+    )}
+    
+    {/* עריכה - רק לטיוטה */}
+    {statusConfig.canEdit && (
+      <Dropdown.Item as={Link} to={`/lecturer/fill/${instance.formId}?instance=${instance.instanceId}`}>
+        <i className="bi bi-pencil me-2"></i>
+        המשך עריכה
+      </Dropdown.Item>
+    )}
+    
+    {/* ערעור - רק אם נדחה */}
+    {statusConfig.canAppeal && (
+      <>
+        <Dropdown.Divider />
+        <Dropdown.Item as={Link} to={`/lecturer/appeal/${instance.instanceId}`}>
+          <i className="bi bi-megaphone me-2"></i>
+          הגש ערעור
+        </Dropdown.Item>
+      </>
+    )}
+  </Dropdown.Menu>
+</Dropdown>
                             </td>
                           </tr>
                         );
@@ -301,57 +312,86 @@ const MyForms = () => {
 
       {/* Modal פרטי טופס */}
       <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>פרטי הטופס</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedInstance && (
-            <div>
-              <Row className="mb-3">
-                <Col sm={4}><strong>שם הטופס:</strong></Col>
-                <Col>{selectedInstance.formName || `טופס ${selectedInstance.formId}`}</Col>
-              </Row>
-              <Row className="mb-3">
-                <Col sm={4}><strong>סטטוס:</strong></Col>
-                <Col>
-                  <Badge bg={getStatusConfig(selectedInstance.currentStage).variant}>
-                    {getStatusConfig(selectedInstance.currentStage).text}
-                  </Badge>
-                </Col>
-              </Row>
-              <Row className="mb-3">
-                <Col sm={4}><strong>תאריך יצירה:</strong></Col>
-                <Col>{formatDate(selectedInstance.createdDate)}</Col>
-              </Row>
-              <Row className="mb-3">
-                <Col sm={4}><strong>תאריך הגשה:</strong></Col>
-                <Col>{formatDate(selectedInstance.submissionDate)}</Col>
-              </Row>
-              <Row className="mb-3">
-                <Col sm={4}><strong>עדכון אחרון:</strong></Col>
-                <Col>{formatDate(selectedInstance.lastModifiedDate)}</Col>
-              </Row>
-              {selectedInstance.totalScore > 0 && (
-                <Row className="mb-3">
-                  <Col sm={4}><strong>ציון:</strong></Col>
-                  <Col><Badge bg="info">{selectedInstance.totalScore}</Badge></Col>
-                </Row>
-              )}
-              {selectedInstance.comments && (
-                <Row className="mb-3">
-                  <Col sm={4}><strong>הערות:</strong></Col>
-                  <Col>{selectedInstance.comments}</Col>
-                </Row>
-              )}
-            </div>
+  <Modal.Header closeButton>
+    <Modal.Title>פרטי מופע הטופס</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    {selectedInstance && (
+      <div>
+        <Alert variant="info">
+          <i className="bi bi-info-circle me-2"></i>
+          זהו מידע כללי על המופע. 
+          {selectedInstance.currentStage !== 'Draft' && (
+            <span> לצפייה בטופס המלא עם התשובות, השתמש בכפתור "צפה בטופס המלא".</span>
           )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
-            סגור
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        </Alert>
+        
+        <Row className="mb-3">
+          <Col sm={4}><strong>שם הטופס:</strong></Col>
+          <Col>{selectedInstance.formName || `טופס ${selectedInstance.formId}`}</Col>
+        </Row>
+        <Row className="mb-3">
+          <Col sm={4}><strong>מזהה מופע:</strong></Col>
+          <Col>#{selectedInstance.instanceId}</Col>
+        </Row>
+        <Row className="mb-3">
+          <Col sm={4}><strong>סטטוס:</strong></Col>
+          <Col>
+            <Badge bg={getStatusConfig(selectedInstance.currentStage).variant}>
+              {getStatusConfig(selectedInstance.currentStage).text}
+            </Badge>
+          </Col>
+        </Row>
+        <Row className="mb-3">
+          <Col sm={4}><strong>תאריך יצירה:</strong></Col>
+          <Col>{formatDate(selectedInstance.createdDate)}</Col>
+        </Row>
+        <Row className="mb-3">
+          <Col sm={4}><strong>תאריך הגשה:</strong></Col>
+          <Col>{selectedInstance.submissionDate ? 
+            formatDate(selectedInstance.submissionDate) : 
+            <span className="text-muted">טרם הוגש</span>}
+          </Col>
+        </Row>
+        <Row className="mb-3">
+          <Col sm={4}><strong>עדכון אחרון:</strong></Col>
+          <Col>{formatDate(selectedInstance.lastModifiedDate)}</Col>
+        </Row>
+        {selectedInstance.totalScore > 0 && (
+          <Row className="mb-3">
+            <Col sm={4}><strong>ציון:</strong></Col>
+            <Col><Badge bg="info">{selectedInstance.totalScore}</Badge></Col>
+          </Row>
+        )}
+        {selectedInstance.comments && (
+          <Row className="mb-3">
+            <Col sm={4}><strong>הערות:</strong></Col>
+            <Col>
+              <Alert variant="secondary" className="mb-0">
+                {selectedInstance.comments}
+              </Alert>
+            </Col>
+          </Row>
+        )}
+      </div>
+    )}
+  </Modal.Body>
+  <Modal.Footer>
+    <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+      סגור
+    </Button>
+    {selectedInstance && selectedInstance.currentStage !== 'Draft' && (
+      <Button 
+        as={Link} 
+        to={`/lecturer/view/${selectedInstance.instanceId}`}
+        variant="primary"
+      >
+        <i className="bi bi-eye me-2"></i>
+        צפה בטופס המלא
+      </Button>
+    )}
+  </Modal.Footer>
+</Modal>
     </Container>
   );
 };

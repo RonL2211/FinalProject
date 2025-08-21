@@ -9,6 +9,7 @@ import { appealService } from '../../services/appealService';
 import { userService } from '../../services/userService';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorAlert from '../../components/UI/ErrorAlert';
+import Swal from 'sweetalert2';
 
 const ManagerDashboard = () => {
   const { user } = useAuth();
@@ -99,7 +100,26 @@ const ManagerDashboard = () => {
       setLoading(false);
     }
   };
+const handlePublishForm = async (formId) => {
+    setProcessing(true);
+    try {
+      await formService.publishForm(formId);
+Swal.fire({
+  icon: 'success',
+  title: 'פורסם בהצלחה',
+  text: 'הטופס פורסם בהצלחה',
+  confirmButtonText: 'אוקי'
+}).then(() => {
+  loadDashboardData();
+});
 
+      setError('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
   const handleQuickAppealResponse = async () => {
     if (!quickAppeal || !appealDecision) return;
 
@@ -577,7 +597,7 @@ const ManagerDashboard = () => {
                                 <Button
                                   variant="outline-success"
                                   size="sm"
-                                  onClick={() => {/* פרסום מהיר */}}
+                                  onClick={() => handlePublishForm(form.formID)}
                                 >
                                   <i className="bi bi-upload me-1"></i>
                                   פרסם
