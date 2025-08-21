@@ -5,9 +5,7 @@ import "./index.css"; // אם תרצה קובץ CSS כללי
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
     <App />
-  </React.StrictMode>
 );
 
 
