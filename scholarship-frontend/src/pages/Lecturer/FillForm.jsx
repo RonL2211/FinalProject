@@ -7,6 +7,7 @@ import { instanceService } from '../../services/instanceService';
 import { useAuth } from '../../context/AuthContext';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorAlert from '../../components/UI/ErrorAlert';
+import Swal from 'sweetalert2';
 
 const FillForm = () => {
   const { id: formId } = useParams();
@@ -216,7 +217,10 @@ const FillForm = () => {
       await instanceService.saveFieldAnswers(currentInstance.instanceId, answersArray);
       
       // הצגת הודעת הצלחה
-      alert('השינויים נשמרו בהצלחה!');
+      Swal.fire({
+        icon: 'success',
+        title: 'השינויים נשמרו בהצלחה!',
+      });
     } catch (err) {
       console.error('Save error:', err);
       // בדוק אם זו בעיית 404

@@ -158,9 +158,9 @@ namespace FinalProject.BL.Services
             return _instanceRepository.UpdateInstanceStatus(instanceId, "Returned", comments);
         }
 
-        public int UpdateInstanceStatus(FormInstance instance , string newStatus)
+        public int UpdateInstanceStatus(int instanceId , string newStatus , string comments="")
         {
-            if (instance.InstanceId <= 0)
+            if (instanceId <= 0)
                 throw new ArgumentException("Instance ID must be greater than zero");
 
             if (string.IsNullOrEmpty(newStatus))
@@ -177,7 +177,7 @@ namespace FinalProject.BL.Services
             if (!validStatuses.Contains(newStatus))
                 throw new ArgumentException($"Invalid status: {newStatus}");
 
-            return _instanceRepository.UpdateInstanceStatus(instance.InstanceId, newStatus, instance.Comments);
+            return _instanceRepository.UpdateInstanceStatus(instanceId, newStatus, comments);
         }
 
         public List<FormInstance> GetInstancesByStage(string stage)
@@ -186,6 +186,11 @@ namespace FinalProject.BL.Services
                 throw new ArgumentException("Stage cannot be empty");
 
             return _instanceRepository.GetInstancesByStage(stage);
+        } public List<FormInstance> GetAllInstances()
+        {
+   
+
+            return _instanceRepository.GetAllInstances();
         }
 
         public List<FormInstance> GetInstancesByFormId(int formId)

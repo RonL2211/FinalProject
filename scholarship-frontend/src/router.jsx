@@ -25,8 +25,8 @@ import DeanReviewForms from './pages/Dean/ReviewForms';
 import DeanReports from './pages/Dean/Reports';
 
 // Department Head Pages (ראש מחלקה)
-import DeptHeadDashboard from './pages/DepartmentHead/Dashboard';
-import DeptHeadReviewForms from './pages/DepartmentHead/ReviewForms';
+// import DeptHeadDashboard from './pages/DepartmentHead/Dashboard';
+// import DeptHeadReviewForms from './pages/DepartmentHead/ReviewForms';
 import DeptHeadReports from './pages/DepartmentHead/Reports';
 
 // Lecturer Pages (מרצה)
@@ -43,6 +43,7 @@ import UnauthorizedPage from './pages/Shared/UnauthorizedPage';
 import NotFoundPage from './pages/Shared/NotFoundPage';
 import FormViewer from './pages/Manager/FormViewer';
 import DepartmentSubmissionsReview from './pages/Shared/DepartmentSubmissionsReview';
+import ViewSubmission from './pages/Shared/ViewSubmission';
 // import ProfilePage from './pages/Shared/ProfilePage';
 
 
@@ -175,7 +176,7 @@ const AppRouter = () => {
           />
 
           {/* Department Head Routes (ראש מחלקה) */}
-          <Route
+          {/* <Route
             path="/dept-head"
             element={
               <ProtectedRoute requiredRoles={["ראש מחלקה"]}>
@@ -190,7 +191,7 @@ const AppRouter = () => {
                 <DeptHeadReviewForms />
               </ProtectedRoute>
             }
-          />
+          /> */}
           <Route
             path="/dept-head/reports"
             element={
@@ -270,8 +271,18 @@ const AppRouter = () => {
           <Route
             path="/department/submissions"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+              requiredRoles={[ "ראש התמחות", "ראש מחלקה", "דיקאן"]}>
                 <DepartmentSubmissionsReview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+           path="/view-submission/:instanceId"
+            element={
+              <ProtectedRoute
+              requiredRoles={[ "ראש התמחות", "ראש מחלקה", "דיקאן"]}>
+                <ViewSubmission />
               </ProtectedRoute>
             }
           />

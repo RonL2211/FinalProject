@@ -5,7 +5,7 @@ import { Container, Row, Col, Card, Button, Badge, Table, Modal, Form, Alert, Ta
 import { Link } from 'react-router-dom';
 import { instanceService } from '../../services/instanceService';
 import { formService } from '../../services/formService';
-import { authService } from '../../services/authService';
+import { getCurrentUser } from '../../services/authService';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorAlert from '../../components/UI/ErrorAlert';
 
@@ -37,7 +37,7 @@ const DepartmentSubmissionsReview = () => {
   }, [submissions, activeTab, searchTerm, selectedForm]);
 
   const determineUserRole = () => {
-    const user = authService.getCurrentUser();
+    const user = getCurrentUser();
     if (user?.roles) {
       if (user.roles.includes('דיקאן')) {
         setUserRole('דיקאן');
@@ -110,16 +110,24 @@ const DepartmentSubmissionsReview = () => {
         }
         break;
       case 'approved':
-        // טפסים שאושרו
+        // טפסים שאושרו על ידי המשתמש הנוכחי או עברו לשלב הבא
         if (userRole === 'דיקאן') {
+          // דיקאן רואה טפסים שהוא אישר (ApprovedByDean) או שאושרו סופית
           filtered = filtered.filter(s => 
             s.currentStage === 'ApprovedByDean' ||
-            s.status === 'ApprovedByDean'
+            s.status === 'ApprovedByDean' ||
+            s.currentStage === 'FinalApproved' ||
+            s.status === 'FinalApproved'
           );
         } else {
+          // ראש מחלקה רואה טפסים שהוא אישר (ApprovedByDepartment ומעלה)
           filtered = filtered.filter(s => 
             s.currentStage === 'ApprovedByDepartment' ||
-            s.status === 'ApprovedByDepartment'
+            s.status === 'ApprovedByDepartment' ||
+            s.currentStage === 'ApprovedByDean' ||
+            s.status === 'ApprovedByDean' ||
+            s.currentStage === 'FinalApproved' ||
+            s.status === 'FinalApproved'
           );
         }
         break;
@@ -232,18 +240,38 @@ const DepartmentSubmissionsReview = () => {
   };
 
   const getSubmissionsByStatus = (status) => {
-    const pendingStage = userRole === 'דיקאן' ? 'ApprovedByDepartment' : 'Submitted';
-    const approvedStage = userRole === 'דיקאן' ? 'ApprovedByDean' : 'ApprovedByDepartment';
-
     switch (status) {
       case 'pending':
-        return submissions.filter(s => 
-          s.currentStage === pendingStage || s.status === pendingStage
-        ).length;
+        // טפסים הממתינים לאישור המשתמש הנוכחי
+        if (userRole === 'דיקאן') {
+          return submissions.filter(s => 
+            s.currentStage === 'ApprovedByDepartment' || s.status === 'ApprovedByDepartment'
+          ).length;
+        } else {
+          return submissions.filter(s => 
+            s.currentStage === 'Submitted' || s.status === 'Submitted'
+          ).length;
+        }
       case 'approved':
-        return submissions.filter(s => 
-          s.currentStage === approvedStage || s.status === approvedStage
-        ).length;
+        // טפסים שאושרו על ידי המשתמש או עברו הלאה
+        if (userRole === 'דיקאן') {
+          return submissions.filter(s => 
+            s.currentStage === 'ApprovedByDean' || 
+            s.status === 'ApprovedByDean' ||
+            s.currentStage === 'FinalApproved' || 
+            s.status === 'FinalApproved'
+          ).length;
+        } else {
+          // ראש מחלקה - כל הטפסים שעברו את השלב שלו
+          return submissions.filter(s => 
+            s.currentStage === 'ApprovedByDepartment' || 
+            s.status === 'ApprovedByDepartment' ||
+            s.currentStage === 'ApprovedByDean' || 
+            s.status === 'ApprovedByDean' ||
+            s.currentStage === 'FinalApproved' || 
+            s.status === 'FinalApproved'
+          ).length;
+        }
       case 'rejected':
         return submissions.filter(s => 
           s.currentStage === 'Rejected' || s.status === 'Rejected'

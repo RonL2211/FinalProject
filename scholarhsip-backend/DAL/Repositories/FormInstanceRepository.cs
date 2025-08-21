@@ -220,5 +220,40 @@ namespace FinalProject.DAL.Repositories
                 throw ex;
             }
         }
+        
+        
+        public List<FormInstance> GetAllInstances( )
+        {
+
+            List<FormInstance> instanceList = new List<FormInstance>();
+
+            try
+            {
+                SqlDataReader dataReader = ExecuteReader("spGetAllInstances" , null);
+
+                while (dataReader.Read())
+                {
+                    FormInstance instance = new FormInstance
+                    {
+                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
+                        FormId = Convert.ToInt32(dataReader["FormId"]),
+                        UserID = dataReader["UserID"].ToString(),
+                        CreatedDate = dataReader["createdDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["createdDate"]) : null,
+                        CurrentStage = dataReader["CurrentStage"].ToString(),
+                        TotalScore = dataReader["TotalScore"] != DBNull.Value ? Convert.ToDecimal(dataReader["TotalScore"]) : null,
+                        SubmissionDate = dataReader["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["SubmissionDate"]) : null,
+                        LastModifiedDate = dataReader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["LastModifiedDate"]) : null,
+                        Comments = dataReader["Comments"].ToString()
+                    };
+                    instanceList.Add(instance);
+                }
+
+                return instanceList;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
     }
 }

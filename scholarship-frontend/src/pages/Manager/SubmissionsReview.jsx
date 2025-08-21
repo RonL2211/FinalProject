@@ -6,6 +6,7 @@ import { instanceService } from '../../services/instanceService';
 import { formService } from '../../services/formService';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorAlert from '../../components/UI/ErrorAlert';
+import Swal from 'sweetalert2';
 
 const SubmissionsReview = () => {
   const [submissions, setSubmissions] = useState([]);
@@ -79,29 +80,25 @@ const SubmissionsReview = () => {
   const filterSubmissions = () => {
     let filtered = [...submissions];
 
-    // סינון לפי טאב (סטטוס) - התאמה לסטטוסים הנכונים
+    // סינון לפי טאב (סטטוס)
     switch (activeTab) {
       case 'pending':
-        // טפסים שממתינים לאישור סופי - בשרת זה ApprovedByDean
+        // טפסים שממתינים לאישור סופי של מנהל סטודנטים
         filtered = filtered.filter(s => 
-          s.currentStage === 'ApprovedByDean' || 
-          s.status === 'ApprovedByDean'
+          s.currentStage === 'ApprovedByDean'
         );
         break;
       case 'approved':
         // טפסים שאושרו סופית
         filtered = filtered.filter(s => 
           s.currentStage === 'FinalApproved' || 
-          s.currentStage === 'Approved' ||
-          s.status === 'FinalApproved' ||
-          s.status === 'Approved'
+          s.currentStage === 'Approved'
         );
         break;
       case 'rejected':
         // טפסים שנדחו
         filtered = filtered.filter(s => 
-          s.currentStage === 'Rejected' ||
-          s.status === 'Rejected'
+          s.currentStage === 'Rejected'
         );
         break;
       case 'all':
@@ -121,7 +118,6 @@ const SubmissionsReview = () => {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(submission =>
         submission.userID?.toLowerCase().includes(searchLower) ||
-        submission.userId?.toLowerCase().includes(searchLower) ||
         submission.formName?.toLowerCase().includes(searchLower) ||
         submission.firstName?.toLowerCase().includes(searchLower) ||
         submission.lastName?.toLowerCase().includes(searchLower) ||
@@ -146,14 +142,17 @@ const SubmissionsReview = () => {
     setError('');
     
     try {
-      const instanceId = selectedSubmission.instanceId || selectedSubmission.instanceID;
+      const instanceId = selectedSubmission.instanceId;
       
       if (reviewAction === 'approve') {
         // אישור סופי - השרת יעדכן לסטטוס FinalApproved
         await instanceService.approveInstance(instanceId, reviewComments);
         
         // הצגת הודעת הצלחה
-        alert('הטופס אושר בהצלחה!');
+        Swal.fire({
+          icon: 'success',
+          title: 'הטופס אושר סופית בהצלחה!',
+        });
       } else if (reviewAction === 'reject') {
         // דחייה
         if (!reviewComments.trim()) {
@@ -164,7 +163,10 @@ const SubmissionsReview = () => {
         await instanceService.rejectInstance(instanceId, reviewComments);
         
         // הצגת הודעת הצלחה
-        alert('הטופס נדחה.');
+        Swal.fire({
+          icon: 'error',
+          title: 'הטופס נדחה.',
+        });
       }
 
       // רענון הרשימה
@@ -183,7 +185,6 @@ const SubmissionsReview = () => {
   };
 
   const getStatusBadge = (stage) => {
-    // טיפול גם ב-stage וגם ב-status
     const status = stage || '';
     
     const stageMap = {
@@ -218,22 +219,14 @@ const SubmissionsReview = () => {
   const getSubmissionsByStatus = (status) => {
     switch (status) {
       case 'pending':
-        return submissions.filter(s => 
-          s.currentStage === 'ApprovedByDean' || 
-          s.status === 'ApprovedByDean'
-        ).length;
+        return submissions.filter(s => s.currentStage === 'ApprovedByDean').length;
       case 'approved':
         return submissions.filter(s => 
           s.currentStage === 'FinalApproved' || 
-          s.currentStage === 'Approved' ||
-          s.status === 'FinalApproved' ||
-          s.status === 'Approved'
+          s.currentStage === 'Approved'
         ).length;
       case 'rejected':
-        return submissions.filter(s => 
-          s.currentStage === 'Rejected' ||
-          s.status === 'Rejected'
-        ).length;
+        return submissions.filter(s => s.currentStage === 'Rejected').length;
       default:
         return 0;
     }
@@ -430,10 +423,10 @@ const SubmissionsReview = () => {
                     </thead>
                     <tbody>
                       {filteredSubmissions.map((submission, index) => {
-                        const instanceId = submission.instanceId || submission.instanceID;
-                        const userId = submission.userID || submission.userId;
+                        const instanceId = submission.instanceId;
+                        const userId = submission.userID;
                         const fullName = submission.fullName || `${submission.firstName || ''} ${submission.lastName || ''}`.trim();
-                        const currentStatus = submission.currentStage || submission.status;
+                        const currentStatus = submission.currentStage;
                         const canReview = currentStatus === 'ApprovedByDean';
 
                         return (
@@ -477,7 +470,7 @@ const SubmissionsReview = () => {
                                 {/* כפתור צפייה בטופס המלא */}
                                 <Button
                                   as={Link}
-                                  to={`/manager/view-submission/${instanceId}`}
+                                  to={`/view-submission/${instanceId}`}
                                   variant="outline-info"
                                   size="sm"
                                   title="צפייה בטופס"
@@ -560,7 +553,7 @@ const SubmissionsReview = () => {
               </Row>
               <Row className="mb-3">
                 <Col sm={3}><strong>ת.ז.:</strong></Col>
-                <Col>{selectedSubmission.userID || selectedSubmission.userId}</Col>
+                <Col>{selectedSubmission.userID}</Col>
               </Row>
               <Row className="mb-3">
                 <Col sm={3}><strong>טופס:</strong></Col>
