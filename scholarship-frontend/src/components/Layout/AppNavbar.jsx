@@ -23,7 +23,8 @@ const AppNavbar = () => {
         { path: '/manager', label: 'דף הבית', exact: true },
         { path: '/manager/forms', label: 'ניהול טפסים' },
         { path: '/manager/appeals', label: 'ערעורים' },
-        { path: '/manager/users', label: 'ניהול משתמשים' }
+        { path: '/manager/users', label: 'ניהול משתמשים' },
+        { path: '/manager/submissions', label: 'סקירת הגשות' }
       );
     } 
     // דיקאן - יכול לראות דפי מרצה + דפי דיקאן

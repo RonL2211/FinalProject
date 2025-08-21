@@ -25,9 +25,22 @@ namespace FinalProject.Controllers
             _departmentService = new DepartmentService(configuration);
         }
 
-        /// <summary>
-        /// קבלת מופעי טפסים של משתמש - רק המשתמש עצמו או מי שמורשה לראות
-        /// </summary>
+        [HttpGet("form/{formId}")]
+        public IActionResult GetInstancesByFormId(int formId)
+        {
+            try
+            {
+                var instances = _instanceService.GetInstancesByFormId(formId);
+                return Ok(instances);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+
+        }
+
+
         [HttpGet("user/{userId}")]
         public IActionResult GetUserInstances(string userId)
         {
@@ -129,26 +142,94 @@ namespace FinalProject.Controllers
                 var currentUser = _personService.GetPersonById(currentUserId);
                 var userRoles = _personService.GetPersonRoles(currentUserId);
 
-                // מנהל סטודנטים רואה הכל
+                // מנהל סטודנטים רואה הכל שעבר דיקאן
                 if (userRoles.Any(r => r.RoleName == "מנהל סטודנטים"))
                 {
-                    var allInstances = _instanceService.GetInstancesByStage("ApprovedByDean");
+                    var allInstances = _instanceService.GetAllInstances()
+                        .Where(i => i.CurrentStage == "ApprovedByDean")
+                        .ToList();
+
+                    // הוספת פרטי המשתמש לכל מופע
+                    foreach (var instance in allInstances)
+                    {
+                        var user = _personService.GetPersonById(instance.UserID);
+                        if (user != null)
+                        {
+                            instance.FirstName = user.FirstName;
+                            instance.LastName = user.LastName;
+                            instance.FullName = $"{user.FirstName} {user.LastName}";
+                        }
+                    }
+
                     return Ok(allInstances);
                 }
 
-                // דיקאן רואה את הפקולטה שלו
+                // דיקאן רואה את הפקולטה שלו - דרך המחלקה
                 if (userRoles.Any(r => r.RoleName == "דיקאן"))
                 {
+                    if (!currentUser.DepartmentID.HasValue)
+                        return Ok(new List<FormInstance>());
+
+                    // קבלת הפקולטה דרך המחלקה
                     var department = _departmentService.GetDepartmentById(currentUser.DepartmentID.Value);
-                    var facultyInstances = GetInstancesByFaculty(department.FacultyId.Value, "ApprovedByDepartment");
-                    return Ok(facultyInstances);
+                    if (department == null || !department.FacultyId.HasValue)
+                        return Ok(new List<FormInstance>());
+
+                    // קבלת כל המחלקות באותה פקולטה
+                    var facultyDepartments = _departmentService.GetAllDepartments()
+                        .Where(d => d.FacultyId == department.FacultyId.Value)
+                        .Select(d => d.DepartmentID)
+                        .ToList();
+
+                    // קבלת כל המופעים מהמחלקות בפקולטה
+                    var facultyInstances = _instanceService.GetAllInstances()
+                        .Where(i => i.CurrentStage == "ApprovedByDepartment")
+                        .ToList();
+
+                    // סינון לפי המחלקות בפקולטה
+                    var filteredInstances = new List<FormInstance>();
+                    foreach (var instance in facultyInstances)
+                    {
+                        var instanceUser = _personService.GetPersonById(instance.UserID);
+                        if (instanceUser != null && instanceUser.DepartmentID.HasValue &&
+                            facultyDepartments.Contains(instanceUser.DepartmentID.Value))
+                        {
+                            instance.FirstName = instanceUser.FirstName;
+                            instance.LastName = instanceUser.LastName;
+                            instance.FullName = $"{instanceUser.FirstName} {instanceUser.LastName}";
+                            filteredInstances.Add(instance);
+                        }
+                    }
+
+                    return Ok(filteredInstances);
                 }
 
                 // ראש מחלקה רואה את המחלקה שלו
-                if (userRoles.Any(r => r.RoleName == "ראש מחלקה"))
+                if (userRoles.Any(r => r.RoleName == "ראש מחלקה" || r.RoleName == "ראש התמחות"))
                 {
-                    var departmentInstances = GetInstancesByDepartment(currentUser.DepartmentID.Value, "Submitted");
-                    return Ok(departmentInstances);
+                    if (!currentUser.DepartmentID.HasValue)
+                        return Ok(new List<FormInstance>());
+
+                    // קבלת כל המופעים שהוגשו
+                    var departmentInstances = _instanceService.GetAllInstances()
+                        .Where(i => i.CurrentStage == "Submitted")
+                        .ToList();
+
+                    // סינון לפי המחלקה
+                    var filteredInstances = new List<FormInstance>();
+                    foreach (var instance in departmentInstances)
+                    {
+                        var instanceUser = _personService.GetPersonById(instance.UserID);
+                        if (instanceUser != null && instanceUser.DepartmentID == currentUser.DepartmentID)
+                        {
+                            instance.FirstName = instanceUser.FirstName;
+                            instance.LastName = instanceUser.LastName;
+                            instance.FullName = $"{instanceUser.FirstName} {instanceUser.LastName}";
+                            filteredInstances.Add(instance);
+                        }
+                    }
+
+                    return Ok(filteredInstances);
                 }
 
                 return Forbid("Not authorized to review instances");
@@ -158,6 +239,7 @@ namespace FinalProject.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
 
         /// <summary>
         /// אישור מופע טופס - לפי הרשאות בהיררכיה
@@ -258,6 +340,89 @@ namespace FinalProject.Controllers
         }
 
         // Helper Methods
+        /// <summary>
+        /// פונקציה עזר לקביעת הסטטוס הבא
+        /// </summary>
+        private string GetNextApprovalStatus(string userId)
+        {
+            var userRoles = _personService.GetPersonRoles(userId);
+
+            if (userRoles.Any(r => r.RoleName == "מנהל סטודנטים"))
+                return "FinalApproved";
+
+            if (userRoles.Any(r => r.RoleName == "דיקאן"))
+                return "ApprovedByDean";
+
+            if (userRoles.Any(r => r.RoleName == "ראש מחלקה" || r.RoleName == "ראש התמחות"))
+                return "ApprovedByDepartment";
+
+            return "UnderReview";
+        }
+
+        /// <summary>
+        /// בדיקת הרשאה לאישור
+        /// </summary>
+        private bool CanUserApproveInstance(string userId, FormInstance instance)
+        {
+            var user = _personService.GetPersonById(userId);
+            var userRoles = _personService.GetPersonRoles(userId);
+
+            // מנהל סטודנטים יכול לאשר רק טפסים שעברו דיקאן
+            if (userRoles.Any(r => r.RoleName == "מנהל סטודנטים"))
+            {
+                return instance.CurrentStage == "ApprovedByDean";
+            }
+
+            // דיקאן יכול לאשר רק טפסים מהפקולטה שלו שאושרו במחלקה
+            if (userRoles.Any(r => r.RoleName == "דיקאן"))
+            {
+                if (instance.CurrentStage != "ApprovedByDepartment")
+                    return false;
+
+                // בדיקה שהמשתמש מאותה פקולטה
+                var instanceUser = _personService.GetPersonById(instance.UserID);
+                if (instanceUser?.DepartmentID == null || user?.DepartmentID == null)
+                    return false;
+
+                var userDept = _departmentService.GetDepartmentById(user.DepartmentID.Value);
+                var instanceDept = _departmentService.GetDepartmentById(instanceUser.DepartmentID.Value);
+
+                return userDept?.FacultyId == instanceDept?.FacultyId;
+            }
+
+            // ראש מחלקה יכול לאשר רק טפסים מהמחלקה שלו שהוגשו
+            if (userRoles.Any(r => r.RoleName == "ראש מחלקה" || r.RoleName == "ראש התמחות"))
+            {
+                if (instance.CurrentStage != "Submitted")
+                    return false;
+
+                // בדיקה שהמשתמש מאותה מחלקה
+                var instanceUser = _personService.GetPersonById(instance.UserID);
+                return instanceUser?.DepartmentID == user?.DepartmentID;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// עדכון סטטוס מופע
+        /// </summary>
+        private int UpdateInstanceStatus(int instanceId, string newStatus, string comments = null)
+        {
+            var instance = _instanceService.GetInstanceById(instanceId);
+            if (instance == null)
+                return 0;
+
+            instance.CurrentStage = newStatus;
+            instance.LastModifiedDate = DateTime.Now;
+
+            if (!string.IsNullOrEmpty(comments))
+            {
+                instance.Comments = comments;
+            }
+
+            return _instanceService.UpdateInstanceStatus(instance , newStatus);
+        }
         private bool CanUserViewInstances(string currentUserId, string targetUserId)
         {
             if (currentUserId == targetUserId) return true;
@@ -292,59 +457,13 @@ namespace FinalProject.Controllers
             return false;
         }
 
+        
         private bool CanUserViewInstance(string currentUserId, FormInstance instance)
         {
             return CanUserViewInstances(currentUserId, instance.UserID);
         }
 
-        private bool CanUserApproveInstance(string currentUserId, FormInstance instance)
-        {
-            var userRoles = _personService.GetPersonRoles(currentUserId);
-            var currentUser = _personService.GetPersonById(currentUserId);
-            var instanceUser = _personService.GetPersonById(instance.UserID);
-
-            // מנהל סטודנטים יכול לאשר הכל
-            if (userRoles.Any(r => r.RoleName == "מנהל סטודנטים"))
-                return instance.CurrentStage == "ApprovedByDean";
-
-            // דיקאן יכול לאשר בפקולטה שלו
-            if (userRoles.Any(r => r.RoleName == "דיקאן"))
-            {
-                var currentDepartment = _departmentService.GetDepartmentById(currentUser.DepartmentID.Value);
-                var instanceDepartment = _departmentService.GetDepartmentById(instanceUser.DepartmentID.Value);
-                return currentDepartment.FacultyId == instanceDepartment.FacultyId &&
-                       instance.CurrentStage == "ApprovedByDepartment";
-            }
-
-            // ראש מחלקה יכול לאשר במחלקה שלו
-            if (userRoles.Any(r => r.RoleName == "ראש מחלקה"))
-            {
-                return currentUser.DepartmentID == instanceUser.DepartmentID &&
-                       instance.CurrentStage == "Submitted";
-            }
-
-            return false;
-        }
-
-        private string GetNextApprovalStatus(string userId)
-        {
-            var userRoles = _personService.GetPersonRoles(userId);
-
-            if (userRoles.Any(r => r.RoleName == "מנהל סטודנטים"))
-                return "FinalApproved";
-            if (userRoles.Any(r => r.RoleName == "דיקאן"))
-                return "ApprovedByDean";
-            if (userRoles.Any(r => r.RoleName == "ראש מחלקה"))
-                return "ApprovedByDepartment";
-
-            return "Submitted";
-        }
-
-        private int UpdateInstanceStatus(int instanceId, string status, string comments)
-        {
-            return _instanceService.UpdateInstanceStatus(instanceId, status, comments);
-        }
-
+  
         private List<FormInstance> GetInstancesByDepartment(int departmentId, string status)
         {
             // צריך להוסיף מתודה זו ל-FormInstanceService

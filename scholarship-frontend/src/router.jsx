@@ -17,6 +17,7 @@ import UnifiedFormBuilder from './pages/Manager/UnifiedFormBuilder';
 // import FormEditor from './pages/Manager/FormEditor';
 import ReviewAppeals from './pages/Manager/ReviewAppeals';
 import UsersManagement from './pages/Manager/UsersManagement';
+import SubmissionsReview from './pages/Manager/SubmissionsReview';
 
 // Dean Pages (דיקאן)
 import DeanDashboard from './pages/Dean/Dashboard';
@@ -41,6 +42,7 @@ import ViewSubmittedForm from './pages/Lecturer/ViewSubmittedForm';
 import UnauthorizedPage from './pages/Shared/UnauthorizedPage';
 import NotFoundPage from './pages/Shared/NotFoundPage';
 import FormViewer from './pages/Manager/FormViewer';
+import DepartmentSubmissionsReview from './pages/Shared/DepartmentSubmissionsReview';
 // import ProfilePage from './pages/Shared/ProfilePage';
 
 
@@ -56,136 +58,223 @@ const AppRouter = () => {
       <Layout>
         <Routes>
           {/* Public Routes */}
-          <Route 
-            path="/login" 
+          <Route
+            path="/login"
             element={
               isAuthenticated ? (
                 <Navigate to={getDefaultRoute()} replace />
               ) : (
                 <LoginPage />
               )
-            } 
+            }
           />
 
           {/* Default Route */}
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
-              <Navigate to={isAuthenticated ? getDefaultRoute() : '/login'} replace />
-            } 
+              <Navigate
+                to={isAuthenticated ? getDefaultRoute() : "/login"}
+                replace
+              />
+            }
           />
 
           {/* Manager Routes (מנהל סטודנטים) */}
-          <Route path="/manager" element={
-            <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <ManagerDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/manager/forms" element={
-            <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <FormsManagement />
-            </ProtectedRoute>
-          } />
-          <Route path="/manager/forms/new" element={
-            <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              {/* <FormBuilder /> */}
-              <UnifiedFormBuilder mode="create" />
-            </ProtectedRoute>
-          } />
-          <Route path="/manager/forms/edit/:id" element={
-            <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              {/* <FormEditor /> */}
-              <UnifiedFormBuilder mode="edit" />
-            </ProtectedRoute>
-          } />
-          <Route path="/manager/forms/view/:id" element={
-            <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <FormViewer />
-            </ProtectedRoute>
-          } />
-          <Route path="/manager/appeals" element={
-            <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <ReviewAppeals />
-            </ProtectedRoute>
-          } />
-          <Route path="/manager/users" element={
-            <ProtectedRoute requiredRoles={['מנהל סטודנטים']}>
-              <UsersManagement />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/manager"
+            element={
+              <ProtectedRoute requiredRoles={["מנהל סטודנטים"]}>
+                <ManagerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/forms"
+            element={
+              <ProtectedRoute requiredRoles={["מנהל סטודנטים"]}>
+                <FormsManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/forms/new"
+            element={
+              <ProtectedRoute requiredRoles={["מנהל סטודנטים"]}>
+                {/* <FormBuilder /> */}
+                <UnifiedFormBuilder mode="create" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/forms/edit/:id"
+            element={
+              <ProtectedRoute requiredRoles={["מנהל סטודנטים"]}>
+                {/* <FormEditor /> */}
+                <UnifiedFormBuilder mode="edit" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/forms/view/:id"
+            element={
+              <ProtectedRoute requiredRoles={["מנהל סטודנטים"]}>
+                <FormViewer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/appeals"
+            element={
+              <ProtectedRoute requiredRoles={["מנהל סטודנטים"]}>
+                <ReviewAppeals />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/users"
+            element={
+              <ProtectedRoute requiredRoles={["מנהל סטודנטים"]}>
+                <UsersManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/submissions"
+            element={
+              <ProtectedRoute requiredRoles={["מנהל סטודנטים"]}>
+                <SubmissionsReview />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Dean Routes (דיקאן) */}
-          <Route path="/dean" element={
-            <ProtectedRoute requiredRoles={['דיקאן']}>
-              <DeanDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/dean/review" element={
-            <ProtectedRoute requiredRoles={['דיקאן']}>
-              <DeanReviewForms />
-            </ProtectedRoute>
-          } />
-          <Route path="/dean/reports" element={
-            <ProtectedRoute requiredRoles={['דיקאן']}>
-              <DeanReports />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/dean"
+            element={
+              <ProtectedRoute requiredRoles={["דיקאן"]}>
+                <DeanDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dean/review"
+            element={
+              <ProtectedRoute requiredRoles={["דיקאן"]}>
+                <DeanReviewForms />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dean/reports"
+            element={
+              <ProtectedRoute requiredRoles={["דיקאן"]}>
+                <DeanReports />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Department Head Routes (ראש מחלקה) */}
-          <Route path="/dept-head" element={
-            <ProtectedRoute requiredRoles={['ראש מחלקה']}>
-              <DeptHeadDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/dept-head/review" element={
-            <ProtectedRoute requiredRoles={['ראש מחלקה']}>
-              <DeptHeadReviewForms />
-            </ProtectedRoute>
-          } />
-          <Route path="/dept-head/reports" element={
-            <ProtectedRoute requiredRoles={['ראש מחלקה']}>
-              <DeptHeadReports />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/dept-head"
+            element={
+              <ProtectedRoute requiredRoles={["ראש מחלקה"]}>
+                <DeptHeadDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dept-head/review"
+            element={
+              <ProtectedRoute requiredRoles={["ראש מחלקה"]}>
+                <DeptHeadReviewForms />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dept-head/reports"
+            element={
+              <ProtectedRoute requiredRoles={["ראש מחלקה"]}>
+                <DeptHeadReports />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Lecturer Routes (מרצה/ראש התמחות/ראש מחלקה/דיקאן) */}
-          <Route path="/lecturer" element={
-            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
-              <LecturerDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/lecturer/forms" element={
-            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
-              <AvailableForms />
-            </ProtectedRoute>
-          } />
-          <Route path="/lecturer/fill/:id" element={
-            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
-              <FillForm />
-            </ProtectedRoute>
-          } />
-          <Route path="/lecturer/my-forms" element={
-            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
-              <MyForms />
-            </ProtectedRoute>
-          } />
-          <Route path="/lecturer/appeal/:id" element={
-            <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
-              <SubmitAppeal />
-            </ProtectedRoute>
-          } />
-          <Route path="/lecturer/view/:instanceId" element={
-  <ProtectedRoute requiredRoles={['מרצה', 'ראש התמחות', 'ראש מחלקה', 'דיקאן']}>
-    <ViewSubmittedForm />
-  </ProtectedRoute>
-} />
+          <Route
+            path="/lecturer"
+            element={
+              <ProtectedRoute
+                requiredRoles={["מרצה", "ראש התמחות", "ראש מחלקה", "דיקאן"]}
+              >
+                <LecturerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/lecturer/forms"
+            element={
+              <ProtectedRoute
+                requiredRoles={["מרצה", "ראש התמחות", "ראש מחלקה", "דיקאן"]}
+              >
+                <AvailableForms />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/lecturer/fill/:id"
+            element={
+              <ProtectedRoute
+                requiredRoles={["מרצה", "ראש התמחות", "ראש מחלקה", "דיקאן"]}
+              >
+                <FillForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/lecturer/my-forms"
+            element={
+              <ProtectedRoute
+                requiredRoles={["מרצה", "ראש התמחות", "ראש מחלקה", "דיקאן"]}
+              >
+                <MyForms />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/lecturer/appeal/:id"
+            element={
+              <ProtectedRoute
+                requiredRoles={["מרצה", "ראש התמחות", "ראש מחלקה", "דיקאן"]}
+              >
+                <SubmitAppeal />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/lecturer/view/:instanceId"
+            element={
+              <ProtectedRoute
+                requiredRoles={["מרצה", "ראש התמחות", "ראש מחלקה", "דיקאן"]}
+              >
+                <ViewSubmittedForm />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Shared Routes */}
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              {/* <ProfilePage /> */}
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/profile"
+            element={<ProtectedRoute>{/* <ProfilePage /> */}</ProtectedRoute>}
+          />
+          <Route
+            path="/department/submissions"
+            element={
+              <ProtectedRoute>
+                <DepartmentSubmissionsReview />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Error Pages */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />

@@ -1,7 +1,7 @@
-// src/pages/Manager/FormViewer.jsx
+// src/pages/Manager/FormViewer.jsx - מתוקן
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Card, Button, Alert, Accordion, Badge, Tabs, Tab } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Alert, Accordion, Badge, Tabs, Tab, Form } from 'react-bootstrap';
 import { formService } from '../../services/formService';
 import { instanceService } from '../../services/instanceService';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
@@ -15,12 +15,24 @@ const FormViewer = () => {
   const [formInfo, setFormInfo] = useState(null);
   const [sections, setSections] = useState([]);
   const [formStats, setFormStats] = useState({});
-  const [options, setOptions] = useState([]);
-  
+  const [fieldOptions, setFieldOptions] = useState({}); // מחזיק את כל האופציות לפי fieldId
+
   // UI states
   const [activeTab, setActiveTab] = useState('basic');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // תיקון: הגדרת שמות סוגי השדות כקבוע ולא ב-state
+  const fieldTypeNames = {
+    'Select': 'בחירה',
+    'Text': 'טקסט',
+    'TextArea': 'שדה טקסט ארוך',
+    'Number': 'מספר',
+    'Radio': 'רדיו',
+    'Checkbox': 'תיבת סימון',
+    'Date': 'תאריך',
+    'File': 'קובץ'
+  };
 
   useEffect(() => {
     loadFormData();
@@ -38,7 +50,47 @@ const FormViewer = () => {
       // טעינת מבנה הטופס
       try {
         const structure = await formService.getFormStructure(formId);
-        setSections(Array.isArray(structure) ? structure : []);
+        const structureArray = Array.isArray(structure) ? structure : [];
+        
+        // טעינת אופציות לכל שדה שצריך
+        const optionsMap = {};
+        for (const section of structureArray) {
+          if (section.fields && Array.isArray(section.fields)) {
+            for (const field of section.fields) {
+              if (['Select', 'Radio', 'Checkbox'].includes(field.fieldType)) {
+                try {
+                  const options = await formService.getFieldOptions(field.fieldID);
+                  optionsMap[field.fieldID] = options;
+                } catch (err) {
+                  console.warn(`Could not load options for field ${field.fieldID}:`, err);
+                  optionsMap[field.fieldID] = [];
+                }
+              }
+            }
+          }
+          
+          // גם לתתי-סעיפים
+          if (section.subSections && Array.isArray(section.subSections)) {
+            for (const subSection of section.subSections) {
+              if (subSection.fields && Array.isArray(subSection.fields)) {
+                for (const field of subSection.fields) {
+                  if (['Select', 'Radio', 'Checkbox'].includes(field.fieldType)) {
+                    try {
+                      const options = await formService.getFieldOptions(field.fieldID);
+                      optionsMap[field.fieldID] = options;
+                    } catch (err) {
+                      console.warn(`Could not load options for field ${field.fieldID}:`, err);
+                      optionsMap[field.fieldID] = [];
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        setFieldOptions(optionsMap);
+        setSections(structureArray);
       } catch (err) {
         console.warn('Could not load form structure:', err);
         setSections([]);
@@ -64,17 +116,6 @@ const FormViewer = () => {
       setLoading(false);
     }
   };
-
-  const handleGetOptions= (fieldId) =>{
-    try {
-      setOptions([]);
-      let ops = formService.getFieldOptions(fieldId)
-      setOptions(ops);
-    } catch (error) {
-      console.error('Error fetching field options:', error);
-    }
-  }
-
 
   const getFieldTypeIcon = (type) => {
     const icons = {
@@ -102,6 +143,119 @@ const FormViewer = () => {
       return <Badge bg="success">מפורסם</Badge>;
     } else {
       return <Badge bg="warning">טיוטה</Badge>;
+    }
+  };
+
+  // פונקציה לרנדור שדה בתצוגה מקדימה
+  const renderFieldPreview = (field) => {
+    const options = fieldOptions[field.fieldID] || [];
+    
+    switch (field.fieldType) {
+      case 'Text':
+        return (
+          <Form.Control
+            type="text"
+            placeholder={field.placeholder || 'הכנס טקסט...'}
+            disabled
+          />
+        );
+        
+      case 'TextArea':
+        return (
+          <Form.Control
+            as="textarea"
+            rows={3}
+            placeholder={field.placeholder || 'הכנס טקסט ארוך...'}
+            disabled
+          />
+        );
+        
+      case 'Number':
+        return (
+          <Form.Control
+            type="number"
+            placeholder={field.placeholder || 'הכנס מספר...'}
+            min={field.minValue}
+            max={field.maxValue}
+            disabled
+          />
+        );
+        
+      case 'Select':
+        return (
+          <Form.Select disabled>
+            <option>בחר אפשרות...</option>
+            {options.map((option, i) => (
+              <option key={option.optionID || i} value={option.optionValue}>
+                {option.optionLabel || option.optionValue}
+              </option>
+            ))}
+          </Form.Select>
+        );
+        
+      case 'Radio':
+        return (
+          <div>
+            {options.length > 0 ? (
+              options.map((option, i) => (
+                <Form.Check
+                  key={option.optionID || i}
+                  type="radio"
+                  name={`field_${field.fieldID}_preview`}
+                  label={option.optionLabel || option.optionValue}
+                  value={option.optionValue}
+                  disabled
+                />
+              ))
+            ) : (
+              <span className="text-muted">אין אפשרויות</span>
+            )}
+          </div>
+        );
+        
+      case 'Checkbox':
+        return (
+          <div>
+            {options.length > 0 ? (
+              options.map((option, i) => (
+                <Form.Check
+                  key={option.optionID || i}
+                  type="checkbox"
+                  label={option.optionLabel || option.optionValue}
+                  value={option.optionValue}
+                  disabled
+                />
+              ))
+            ) : (
+              <span className="text-muted">אין אפשרויות</span>
+            )}
+          </div>
+        );
+        
+      case 'Date':
+        return (
+          <Form.Control
+            type="date"
+            disabled
+          />
+        );
+        
+      case 'File':
+        return (
+          <Form.Control
+            type="file"
+            disabled
+          />
+        );
+        
+      default:
+        return (
+          <Form.Control
+            type="text"
+            placeholder="סוג שדה לא מוכר"
+            disabled
+          />
+        );
     }
   };
 
@@ -139,6 +293,8 @@ const FormViewer = () => {
                 <Badge bg={formInfo.isActive ? 'success' : 'secondary'}>
                   {formInfo.isActive ? 'פעיל' : 'לא פעיל'}
                 </Badge>
+                                  {console.log(formStats)}
+
                 {formStats.totalSubmissions > 0 && (
                   <Badge bg="info">
                     {formStats.totalSubmissions} הגשות
@@ -263,7 +419,7 @@ const FormViewer = () => {
                           </Row>
                           <Row className="mb-3">
                             <Col sm={3}><strong>תאריך סיום:</strong></Col>
-                            <Col>{formatDate(formInfo.endDate)}</Col>
+                            <Col>{formatDate(formInfo.dueDate || formInfo.endDate)}</Col>
                           </Row>
                         </Card.Body>
                       </Card>
@@ -294,7 +450,10 @@ const FormViewer = () => {
                             </div>
                             <div className="d-flex justify-content-between">
                               <span>שדות:</span>
-                              <span>{sections.reduce((total, section) => total + (section.fields?.length || 0), 0)}</span>
+                              <span>{sections.reduce((total, section) => 
+                                total + (section.fields?.length || 0) + 
+                                (section.subSections?.reduce((subTotal, sub) => 
+                                  subTotal + (sub.fields?.length || 0), 0) || 0), 0)}</span>
                             </div>
                           </div>
                         </Card.Body>
@@ -304,7 +463,7 @@ const FormViewer = () => {
                 </div>
               )}
 
-              {/* Structure Tab - מעתיק מ-FormEditor */}
+              {/* Structure Tab */}
               {activeTab === 'structure' && (
                 <div>
                   <div className="d-flex justify-content-between align-items-center mb-4">
@@ -324,7 +483,7 @@ const FormViewer = () => {
                   ) : (
                     <Accordion>
                       {sections.map((section, sectionIndex) => (
-                        <Accordion.Item key={section.id || sectionIndex} eventKey={sectionIndex.toString()}>
+                        <Accordion.Item key={section.sectionID || sectionIndex} eventKey={sectionIndex.toString()}>
                           <Accordion.Header>
                             <div className="d-flex justify-content-between w-100 me-3">
                               <div>
@@ -335,7 +494,9 @@ const FormViewer = () => {
                               </div>
                               <div className="d-flex gap-2">
                                 <Badge bg="light" text="dark">
-                                  {section.fields?.length || 0} שדות
+                                  {(section.fields?.length || 0) + 
+                                   (section.subSections?.reduce((total, sub) => 
+                                     total + (sub.fields?.length || 0), 0) || 0)} שדות
                                 </Badge>
                                 {section.maxPoints && (
                                   <Badge bg="info">{section.maxPoints} נקודות</Badge>
@@ -353,59 +514,117 @@ const FormViewer = () => {
                               </Alert>
                             )}
 
-                            {/* Fields */}
-                            <div className="mb-3">
-                              <h6>שדות בסעיף:</h6>
-
-                              {(!section.fields || section.fields.length === 0) ? (
-                                <div className="text-center py-3 text-muted">
-                                  <i className="bi bi-input-cursor-text"></i>
-                                  <div>אין שדות בסעיף זה</div>
-                                </div>
-                              ) : (
+                            {/* שדות של הסעיף */}
+                            {section.fields && section.fields.length > 0 && (
+                              <div className="mb-3">
+                                <h6>שדות בסעיף:</h6>
                                 <div className="row">
-                                  {section.fields.map((field, fieldIndex) => (
-                                    <div key={field.id || fieldIndex} className="col-md-6 mb-3">
-                                      <Card className="h-100">
-                                        <Card.Body className="p-3">
-                                          <div className="d-flex align-items-start justify-content-between">
-                                            <div className="flex-grow-1">
-                                              <div className="d-flex align-items-center mb-2">
-                                                <i className={`${getFieldTypeIcon(field.fieldType)} me-2 text-primary`}></i>
-                                                <strong>{field.fieldLabel}</strong>
-                                                {field.isRequired && <span className="text-danger ms-1">*</span>}
-                                              </div>
-                                              
-                                              <div className="small text-muted mb-1">
-                                                <strong>סוג:</strong> {field.fieldType}
-                                              </div>
-                                              
-                                              {field.description && (
-                                                <div className="small text-muted mb-1">
-                                                  <strong>תיאור:</strong> {field.description}
+                                  {section.fields.map((field, fieldIndex) => {
+                                    const options = fieldOptions[field.fieldID] || [];
+                                    return (
+                                      <div key={field.fieldID || fieldIndex} className="col-md-6 mb-3">
+                                        <Card className="h-100">
+                                          <Card.Body className="p-3">
+                                            <div className="d-flex align-items-start justify-content-between">
+                                              <div className="flex-grow-1">
+                                                <div className="d-flex align-items-center mb-2">
+                                                  <i className={`${getFieldTypeIcon(field.fieldType)} me-2 text-primary`}></i>
+                                                  <strong>{field.fieldLabel}</strong>
+                                                  {field.isRequired && <span className="text-danger ms-1">*</span>}
                                                 </div>
-                                              )}
-                                              
-                                              {field.placeholder && (
+                                                
                                                 <div className="small text-muted mb-1">
-                                                  <strong>טקסט עזר:</strong> {field.placeholder}
+                                                  <strong>סוג:</strong> {fieldTypeNames[field.fieldType] || field.fieldType}
                                                 </div>
-                                              )}
+                                                
+                                                {field.helpText && (
+                                                  <div className="small text-muted mb-1">
+                                                    <strong>תיאור:</strong> {field.helpText}
+                                                  </div>
+                                                )}
+                                                
+                                                {field.placeholder && (
+                                                  <div className="small text-muted mb-1">
+                                                    <strong>טקסט עזר:</strong> {field.placeholder}
+                                                  </div>
+                                                )}
 
-                                              {field.options && field.options.length > 0 && (
-                                                <div className="small text-muted">
-                                                  <strong>אפשרויות:</strong> {field.options.map(opt => opt.label || opt.value).join(', ')}
-                                                </div>
-                                              )}
+                                                {options.length > 0 && (
+                                                  <div className="small text-muted">
+                                                    <strong>אפשרויות:</strong> {options.map(opt => 
+                                                      opt.optionLabel || opt.optionValue).join(', ')}
+                                                  </div>
+                                                )}
+                                              </div>
                                             </div>
-                                          </div>
-                                        </Card.Body>
-                                      </Card>
-                                    </div>
-                                  ))}
+                                          </Card.Body>
+                                        </Card>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            )}
+
+                            {/* תתי-סעיפים */}
+                            {section.subSections && section.subSections.length > 0 && (
+                              <div className="ms-4">
+                                <h6 className="text-secondary mb-3">תתי-סעיפים:</h6>
+                                {section.subSections.map((subSection, subIndex) => (
+                                  <Card key={subSection.sectionID || subIndex} className="mb-3">
+                                    <Card.Header className="bg-light">
+                                      <strong>{subSection.title}</strong>
+                                      {subSection.description && (
+                                        <div className="small text-muted">{subSection.description}</div>
+                                      )}
+                                    </Card.Header>
+                                    <Card.Body>
+                                      {subSection.fields && subSection.fields.length > 0 && (
+                                        <div className="row">
+                                          {subSection.fields.map((field, fieldIndex) => {
+                                            const options = fieldOptions[field.fieldID] || [];
+                                            return (
+                                              <div key={field.fieldID || fieldIndex} className="col-md-6 mb-3">
+                                                <Card className="h-100">
+                                                  <Card.Body className="p-3">
+                                                    <div className="flex-grow-1">
+                                                      <div className="d-flex align-items-center mb-2">
+                                                        <i className={`${getFieldTypeIcon(field.fieldType)} me-2 text-primary`}></i>
+                                                        <strong>{field.fieldLabel}</strong>
+                                                        {field.isRequired && <span className="text-danger ms-1">*</span>}
+                                                      </div>
+                                                      
+                                                      <div className="small text-muted mb-1">
+                                                        <strong>סוג:</strong> {fieldTypeNames[field.fieldType] || field.fieldType}
+                                                      </div>
+                                                      
+                                                      {options.length > 0 && (
+                                                        <div className="small text-muted">
+                                                          <strong>אפשרויות:</strong> {options.map(opt => 
+                                                            opt.optionLabel || opt.optionValue).join(', ')}
+                                                        </div>
+                                                      )}
+                                                    </div>
+                                                  </Card.Body>
+                                                </Card>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </Card.Body>
+                                  </Card>
+                                ))}
+                              </div>
+                            )}
+
+                            {(!section.fields || section.fields.length === 0) && 
+                             (!section.subSections || section.subSections.length === 0) && (
+                              <div className="text-center py-3 text-muted">
+                                <i className="bi bi-input-cursor-text"></i>
+                                <div>אין שדות בסעיף זה</div>
+                              </div>
+                            )}
                           </Accordion.Body>
                         </Accordion.Item>
                       ))}
@@ -414,7 +633,7 @@ const FormViewer = () => {
                 </div>
               )}
 
-              {/* Preview Tab - איך הטופס ייראה למרצים */}
+              {/* Preview Tab */}
               {activeTab === 'preview' && (
                 <div>
                   <div className="mb-4">
@@ -445,8 +664,7 @@ const FormViewer = () => {
                         </div>
                       ) : (
                         sections.map((section, sectionIndex) => (
-                          <Card key={section.id || sectionIndex} className="mb-4">
-                            {console.log(section)}
+                          <Card key={section.sectionID || sectionIndex} className="mb-4">
                             <Card.Header>
                               <div className="d-flex justify-content-between align-items-center">
                                 <h6 className="mb-0">
@@ -454,11 +672,11 @@ const FormViewer = () => {
                                   {section.isRequired && <span className="text-danger ms-1">*</span>}
                                 </h6>
                                 {section.maxPoints && (
-                                  <Badge bg="outline-primary">{section.maxPoints} נקודות</Badge>
+                                  <Badge bg="info">{section.maxPoints} נקודות</Badge>
                                 )}
                               </div>
                               {section.description && (
-                                <small className="text-muted">{section.description}</small>
+                                <small className="text-muted d-block mt-1">{section.description}</small>
                               )}
                             </Card.Header>
                             <Card.Body>
@@ -468,66 +686,82 @@ const FormViewer = () => {
                                 </Alert>
                               )}
 
-                              {(!section.fields || section.fields.length === 0) ? (
+                              {/* שדות של הסעיף */}
+                              {section.fields && section.fields.length > 0 && (
+                                <div className="row">
+                                  {section.fields.map((field, fieldIndex) => (
+                                    <div key={field.fieldID || fieldIndex} className="col-md-6 mb-3">
+                                      <Form.Group>
+                                        <Form.Label>
+                                          {field.fieldLabel}
+                                          {field.isRequired && <span className="text-danger ms-1">*</span>}
+                                        </Form.Label>
+                                        
+                                        {renderFieldPreview(field)}
+                                        
+                                        {field.helpText && (
+                                          <Form.Text className="text-muted">
+                                            {field.helpText}
+                                          </Form.Text>
+                                        )}
+                                      </Form.Group>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* תתי-סעיפים */}
+                              {section.subSections && section.subSections.length > 0 && (
+                                <div className="ms-4 mt-3">
+                                  <h6 className="text-secondary mb-3">תתי-סעיפים:</h6>
+                                  {section.subSections.map((subSection, subIndex) => (
+                                    <Card key={subSection.sectionID || subIndex} className="mb-3">
+                                      <Card.Header className="bg-light">
+                                        <strong>{subSection.title}</strong>
+                                        {subSection.description && (
+                                          <div className="small text-muted">{subSection.description}</div>
+                                        )}
+                                      </Card.Header>
+                                      <Card.Body>
+                                        {subSection.explanation && (
+                                          <Alert variant="light" className="mb-3">
+                                            <small>{subSection.explanation}</small>
+                                          </Alert>
+                                        )}
+                                        
+                                        {subSection.fields && subSection.fields.length > 0 && (
+                                          <div className="row">
+                                            {subSection.fields.map((field, fieldIndex) => (
+                                              <div key={field.fieldID || fieldIndex} className="col-md-6 mb-3">
+                                                <Form.Group>
+                                                  <Form.Label>
+                                                    {field.fieldLabel}
+                                                    {field.isRequired && <span className="text-danger ms-1">*</span>}
+                                                  </Form.Label>
+                                                  
+                                                  {renderFieldPreview(field)}
+                                                  
+                                                  {field.helpText && (
+                                                    <Form.Text className="text-muted">
+                                                      {field.helpText}
+                                                    </Form.Text>
+                                                  )}
+                                                </Form.Group>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </Card.Body>
+                                    </Card>
+                                  ))}
+                                </div>
+                              )}
+
+                              {(!section.fields || section.fields.length === 0) && 
+                               (!section.subSections || section.subSections.length === 0) && (
                                 <div className="text-muted text-center py-3">
                                   <i className="bi bi-info-circle me-1"></i>
                                   אין שדות בסעיף זה
-                                </div>
-                              ) : (
-                                <div className="row">
-                                  {section.fields.map((field, fieldIndex) => (
-                                    <div key={field.id || fieldIndex} className="col-md-6 mb-3">
-                                      {console.log(field)}
-                                      <label className="form-label">
-                                        {field.fieldLabel}
-                                        {field.isRequired && <span className="text-danger ms-1">*</span>}
-                                      </label>
-                                      
-                                      {/* הצגת השדה לפי סוגו */}
-                                      {field.fieldType === 'Text' && (
-                                        <input 
-                                          type="text" 
-                                          className="form-control" 
-                                          placeholder={field.placeholder || 'הכנס טקסט...'}
-                                          disabled 
-                                        />
-                                      )}
-                                      {field.fieldType === 'TextArea' && (
-                                        <textarea 
-                                          className="form-control" 
-                                          rows="3"
-                                          placeholder={field.placeholder || 'הכנס טקסט ארוך...'}
-                                          disabled 
-                                        />
-                                      )}
-                                      {field.fieldType === 'Number' && (
-                                        <input 
-                                          type="number" 
-                                          className="form-control" 
-                                          placeholder={field.placeholder || 'הכנס מספר...'}
-                                          disabled 
-                                        />
-                                      )}
-                                      {field.fieldType === 'Select' && (
-                                        {options = handleGetOptions(field.id)} && (
-                                        <select className="form-select" disabled>
-                                          <option>בחר אפשרות...</option>
-                                          {field.options?.map((option, i) => (
-                                            <option key={i} value={option.value}>
-                                              {option.label || option.value}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      ))}
-                                      {field.fieldType === 'Date' && (
-                                        <input type="date" className="form-control" disabled />
-                                      )}
-                                      
-                                      {field.description && (
-                                        <div className="form-text">{field.description}</div>
-                                      )}
-                                    </div>
-                                  ))}
                                 </div>
                               )}
                             </Card.Body>
@@ -539,7 +773,7 @@ const FormViewer = () => {
                 </div>
               )}
 
-              {/* Statistics Tab - מעתיק מ-FormEditor */}
+              {/* Statistics Tab */}
               {activeTab === 'stats' && (
                 <div>
                   <h5 className="mb-4">סטטיסטיקות הטופס</h5>

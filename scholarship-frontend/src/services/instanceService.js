@@ -97,6 +97,15 @@ export const instanceService = {
       throw new Error(error.response?.data?.message || 'שגיאה בשמירת התשובות');
     }
   },
+  getInstancesByFormId:async (formId) => {
+    try {
+      const response = await api.get(`/FormInstance/form/${formId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching instances by form ID:', error);
+      throw new Error(error.response?.data?.message || 'שגיאה בטעינת מופעים לפי מזהה טופס');
+    }
+  },
 
   // קבלת תשובות של מופע
   getInstanceAnswers: async (instanceId) => {

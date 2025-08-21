@@ -44,27 +44,37 @@ const FormsManagement = () => {
       // טעינת סטטיסטיקות לכל טופס
       const statsPromises = formsData.map(async (form) => {
         try {
-          const instances = await instanceService.getInstancesByFormId?.(form.formID) || [];
-          if(form.formID === 1037) {
-          console.log(form)
-          console.log(instances)
-          }
-          return {
-            formId: form.formID,
-            totalSubmissions: instances.length,
-            approved: instances.filter(i => ['FinalApproved', 'AppealApproved'].includes(i.currentStage)).length,
-            pending: instances.filter(i => ['Submitted', 'ApprovedByDepartment', 'ApprovedByDean'].includes(i.currentStage)).length,
-            rejected: instances.filter(i => ['Rejected', 'AppealRejected'].includes(i.currentStage)).length
-          };
+          const instances = await instanceService.getInstancesByFormId(form.formID) || [];
+              const submittedInstances = instances.filter(i => i.currentStage !== 'Draft');
+
+         return {
+      formId: form.formID,
+      // רק טפסים שהוגשו (לא טיוטות)
+      totalSubmissions: submittedInstances.length,
+      
+      // ספירת הטפסים לפי סטטוס
+      drafts: instances.filter(i => i.currentStage === 'Draft').length,
+      submitted: submittedInstances.filter(i => i.currentStage === 'Submitted').length,
+      underReview: submittedInstances.filter(i => 
+        ['ApprovedByDepartment', 'ApprovedByDean'].includes(i.currentStage)).length,
+      approved: submittedInstances.filter(i => 
+        ['FinalApproved', 'AppealApproved'].includes(i.currentStage)).length,
+      rejected: submittedInstances.filter(i => 
+        ['Rejected', 'AppealRejected'].includes(i.currentStage)).length,
+      underAppeal: submittedInstances.filter(i => i.currentStage === 'UnderAppeal').length
+    };
         } catch (err) {
           return {
-            formId: form.formID,
-            totalSubmissions: 0,
-            approved: 0,
-            pending: 0,
-            rejected: 0
-          };
-        }
+      formId: form.formID,
+      totalSubmissions: 0,
+      drafts: 0,
+      submitted: 0,
+      underReview: 0,
+      approved: 0,
+      rejected: 0,
+      underAppeal: 0
+    };
+  }
       });
 
       const stats = await Promise.all(statsPromises);
@@ -420,15 +430,7 @@ const FormsManagement = () => {
                                   <i className="bi bi-three-dots"></i>
                                 </Dropdown.Toggle>
                                 <Dropdown.Menu>
-                                  {/* <Dropdown.Item
-                                    onClick={() => {
-                                      setSelectedForm(form);
-                                      setShowDetailsModal(true);
-                                    }}
-                                  >
-                                    <i className="bi bi-eye me-2"></i>
-                                    צפה בפרטים
-                                  </Dropdown.Item> */}
+                                  
 <Dropdown.Item
     as={Link}
     to={`/manager/forms/view/${form.formID}`}
