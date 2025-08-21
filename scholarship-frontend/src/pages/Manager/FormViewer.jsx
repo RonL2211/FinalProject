@@ -15,6 +15,7 @@ const FormViewer = () => {
   const [formInfo, setFormInfo] = useState(null);
   const [sections, setSections] = useState([]);
   const [formStats, setFormStats] = useState({});
+  const [options, setOptions] = useState([]);
   
   // UI states
   const [activeTab, setActiveTab] = useState('basic');
@@ -63,6 +64,17 @@ const FormViewer = () => {
       setLoading(false);
     }
   };
+
+  const handleGetOptions= (fieldId) =>{
+    try {
+      setOptions([]);
+      let ops = formService.getFieldOptions(fieldId)
+      setOptions(ops);
+    } catch (error) {
+      console.error('Error fetching field options:', error);
+    }
+  }
+
 
   const getFieldTypeIcon = (type) => {
     const icons = {
@@ -465,6 +477,7 @@ const FormViewer = () => {
                                 <div className="row">
                                   {section.fields.map((field, fieldIndex) => (
                                     <div key={field.id || fieldIndex} className="col-md-6 mb-3">
+                                      {console.log(field)}
                                       <label className="form-label">
                                         {field.fieldLabel}
                                         {field.isRequired && <span className="text-danger ms-1">*</span>}
@@ -496,6 +509,7 @@ const FormViewer = () => {
                                         />
                                       )}
                                       {field.fieldType === 'Select' && (
+                                        {options = handleGetOptions(field.id)} && (
                                         <select className="form-select" disabled>
                                           <option>בחר אפשרות...</option>
                                           {field.options?.map((option, i) => (
@@ -504,7 +518,7 @@ const FormViewer = () => {
                                             </option>
                                           ))}
                                         </select>
-                                      )}
+                                      ))}
                                       {field.fieldType === 'Date' && (
                                         <input type="date" className="form-control" disabled />
                                       )}

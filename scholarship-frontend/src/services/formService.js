@@ -595,5 +595,16 @@ export const formService = {
       // אם אין endpoint כזה, נמחק אחד אחד
       return null;
     }
+  },
+
+getFieldOptions:async(fieldId) =>{
+  try {
+    const response = await api.get(`/SectionField/${fieldId}/options`);
+    return response.data || [];
+  } catch (error) {
+    console.error('Error fetching field options:', error);
+    return [];
   }
+}
+
 };
