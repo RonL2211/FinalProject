@@ -174,7 +174,7 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  // בדיקות הרשאות - מתוקנות!
+  // בדיקות הרשאות
   const hasRole = (roleName) => {
     if (!state.user) return false;
     

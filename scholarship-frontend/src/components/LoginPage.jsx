@@ -112,13 +112,6 @@ function LoginPage() {
               <Button variant="primary" type="submit">
                 התחבר
               </Button>
-              {/* <Button
-                variant="link"
-                style={{ textDecoration: "none" }}
-                onClick={() => alert("תהליך שחזור סיסמה (דוגמה)")}
-              >
-                שכחתי סיסמה
-              </Button> */}
             </div>
 
             {/* אפשרות לרישום או פעולה נוספת */}

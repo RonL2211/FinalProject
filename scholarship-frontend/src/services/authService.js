@@ -149,9 +149,9 @@ export const getRoleBasedRedirect = (user) => {
   if (roles.includes('מנהל סטודנטים')) {
     return '/manager';
   } else if (roles.includes('דיקאן')) {
-    return '/dean'; // דיקאן מתחיל בדפי ניהול פקולטה
+    return '/department/submissions'; // דיקאן מתחיל בדפי ניהול פקולטה
   } else if (roles.includes('ראש מחלקה')) {
-    return '/dept-head'; // ראש מחלקה מתחיל בדפי ניהול מחלקה
+    return '/department/submissions'; // ראש מחלקה מתחיל בדפי ניהול מחלקה
   } else if (roles.includes('מרצה') || roles.includes('ראש התמחות')) {
     return '/lecturer';
   } else {
