@@ -13,22 +13,28 @@ import LoginPage from './pages/Auth/LoginPage';
 import ManagerDashboard from './pages/Manager/ManagerDashboard';
 import FormsManagement from './pages/Manager/FormsManagement';
 import UnifiedFormBuilder from './pages/Manager/UnifiedFormBuilder';
+// import FormBuilder from './pages/Manager/FormBuilder';
+// import FormEditor from './pages/Manager/FormEditor';
+import ReviewAppeals from './pages/Manager/ReviewAppeals';
 import UsersManagement from './pages/Manager/UsersManagement';
 import SubmissionsReview from './pages/Manager/SubmissionsReview';
 
 // Dean Pages (דיקאן)
-// import DeanDashboard from './pages/Dean/Dashboard';
+import DeanDashboard from './pages/Dean/Dashboard';
 import DeanReviewForms from './pages/Dean/ReviewForms';
-// import DeanReports from './pages/Dean/Reports';
+import DeanReports from './pages/Dean/Reports';
 
 // Department Head Pages (ראש מחלקה)
-import DeptHeadReviewForms from './pages/DepartmentHead/ReviewForms';
+// import DeptHeadDashboard from './pages/DepartmentHead/Dashboard';
+// import DeptHeadReviewForms from './pages/DepartmentHead/ReviewForms';
+import DeptHeadReports from './pages/DepartmentHead/Reports';
 
 // Lecturer Pages (מרצה)
 import LecturerDashboard from './pages/Lecturer/Dashboard';
 import AvailableForms from './pages/Lecturer/AvailableForms';
 import FillForm from './pages/Lecturer/FillForm';
 import MyForms from './pages/Lecturer/MyForms';
+import SubmitAppeal from './pages/Lecturer/SubmitAppeal';
 import ViewSubmittedForm from './pages/Lecturer/ViewSubmittedForm';
 
 
@@ -118,7 +124,14 @@ const AppRouter = () => {
               </ProtectedRoute>
             }
           />
-         
+          <Route
+            path="/manager/appeals"
+            element={
+              <ProtectedRoute requiredRoles={["מנהל סטודנטים"]}>
+                <ReviewAppeals />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/manager/users"
             element={
@@ -136,7 +149,15 @@ const AppRouter = () => {
             }
           />
 
-          
+          {/* Dean Routes (דיקאן) */}
+          <Route
+            path="/dean"
+            element={
+              <ProtectedRoute requiredRoles={["דיקאן"]}>
+                <DeanDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dean/review"
             element={
@@ -145,17 +166,37 @@ const AppRouter = () => {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/dean/reports"
+            element={
+              <ProtectedRoute requiredRoles={["דיקאן"]}>
+                <DeanReports />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Department Head Routes (ראש מחלקה) */}
-         
-      
-
+          {/* <Route
+            path="/dept-head"
+            element={
+              <ProtectedRoute requiredRoles={["ראש מחלקה"]}>
+                <DeptHeadDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dept-head/review"
             element={
               <ProtectedRoute requiredRoles={["ראש מחלקה"]}>
                 <DeptHeadReviewForms />
+              </ProtectedRoute>
+            }
+          /> */}
+          <Route
+            path="/dept-head/reports"
+            element={
+              <ProtectedRoute requiredRoles={["ראש מחלקה"]}>
+                <DeptHeadReports />
               </ProtectedRoute>
             }
           />
@@ -201,7 +242,16 @@ const AppRouter = () => {
               </ProtectedRoute>
             }
           />
-         
+          <Route
+            path="/lecturer/appeal/:id"
+            element={
+              <ProtectedRoute
+                requiredRoles={["מרצה", "ראש התמחות", "ראש מחלקה", "דיקאן"]}
+              >
+                <SubmitAppeal />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/lecturer/view/:instanceId"
             element={

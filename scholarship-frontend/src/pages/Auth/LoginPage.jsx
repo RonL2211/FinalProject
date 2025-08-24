@@ -157,7 +157,7 @@ const LoginPage = () => {
               {/* מידע נוסף */}
               <div className="text-center mt-4">
                 <small className="text-muted">
-                   מערכת הצטיינות מרצים
+                  מערכת הצטיינות מרצים | גרסה 1.0
                 </small>
               </div>
             </Card.Body>

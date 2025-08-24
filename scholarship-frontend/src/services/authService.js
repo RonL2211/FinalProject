@@ -1,8 +1,7 @@
-// src/services/authService.js 
+// src/services/authService.js - מתוקן
 import axios from 'axios';
 
-// const API_BASE_URL = 'https://localhost:7230/api';
-const API_BASE_URL = 'https://proj.ruppin.ac.il/bgroup1/prod/api';
+const API_BASE_URL = 'https://localhost:7230/api';
 
 // הגדרת axios עם ברירת מחדל
 const api = axios.create({
@@ -121,6 +120,7 @@ export const hasRole = (roleName) => {
     );
   }
   
+  // גיבוי לבדיקת position (לתמיכה לאחור)
   if (user.position) {
     return user.position === roleName;
   }
@@ -149,9 +149,9 @@ export const getRoleBasedRedirect = (user) => {
   if (roles.includes('מנהל סטודנטים')) {
     return '/manager';
   } else if (roles.includes('דיקאן')) {
-    return '/department/submissions'; // דיקאן מתחיל בדפי ניהול פקולטה
+    return '/dean'; // דיקאן מתחיל בדפי ניהול פקולטה
   } else if (roles.includes('ראש מחלקה')) {
-    return '/department/submissions'; // ראש מחלקה מתחיל בדפי ניהול מחלקה
+    return '/dept-head'; // ראש מחלקה מתחיל בדפי ניהול מחלקה
   } else if (roles.includes('מרצה') || roles.includes('ראש התמחות')) {
     return '/lecturer';
   } else {

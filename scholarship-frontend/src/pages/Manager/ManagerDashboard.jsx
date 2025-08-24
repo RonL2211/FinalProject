@@ -4,6 +4,7 @@ import { Container, Row, Col, Card, Button, Alert, Badge, Table, Modal, Form } f
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { formService } from '../../services/formService';
+import { instanceService } from '../../services/instanceService';
 import { appealService } from '../../services/appealService';
 import { userService } from '../../services/userService';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';

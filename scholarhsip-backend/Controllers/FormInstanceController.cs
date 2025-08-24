@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Data;
 
 namespace FinalProject.Controllers
 {
@@ -148,37 +147,7 @@ namespace FinalProject.Controllers
                 // מנהל סטודנטים רואה את כל הטפסים שעברו אישור דיקאן
                 if (userRoles.Any(r => r.RoleName == "מנהל סטודנטים"))
                 {
-                    var allInstances = new List<FormInstance>();
-
-                    // טפסים שהוגשו
-                    var submittedInstances = _instanceService.GetInstancesByStage("Submitted");
-                    if (submittedInstances != null) allInstances.AddRange(submittedInstances);
-
-                    // טפסים שאושרו במחלקה
-                    var deptApprovedInstances = _instanceService.GetInstancesByStage("ApprovedByDepartment");
-                    if (deptApprovedInstances != null) allInstances.AddRange(deptApprovedInstances);
-
-                    // טפסים שאושרו בדיקאן (ממתינים לאישור סופי)
-                    var deanApprovedInstances = _instanceService.GetInstancesByStage("ApprovedByDean");
-                    if (deanApprovedInstances != null) allInstances.AddRange(deanApprovedInstances);
-
-                    // טפסים שאושרו סופית
-                    var finalApprovedInstances = _instanceService.GetInstancesByStage("FinalApproved");
-                    if (finalApprovedInstances != null) allInstances.AddRange(finalApprovedInstances);
-
-                    // טפסים שאושרו (גרסה ישנה)
-                    var approvedInstances = _instanceService.GetInstancesByStage("Approved");
-                    if (approvedInstances != null) allInstances.AddRange(approvedInstances);
-
-                    // טפסים שנדחו
-                    var rejectedInstances = _instanceService.GetInstancesByStage("Rejected");
-                    if (rejectedInstances != null) allInstances.AddRange(rejectedInstances);
-
-                    // הסרת כפילויות
-                    allInstances = allInstances
-                        .GroupBy(i => i.InstanceId)
-                        .Select(g => g.First())
-                        .ToList();
+                    var allInstances = _instanceService.GetInstancesByStage("ApprovedByDean");
 
                     // הוספת פרטי המשתמש לכל מופע
                     instances = allInstances.Select(instance => {
@@ -444,6 +413,7 @@ namespace FinalProject.Controllers
 
 
 
+
         [HttpGet("{id}")]
         public IActionResult GetInstanceById(int id)
         {
@@ -524,6 +494,8 @@ namespace FinalProject.Controllers
 
             return "UnderReview";
         }
+
+
 
 
         /// <summary>
