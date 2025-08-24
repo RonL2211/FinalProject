@@ -2298,23 +2298,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\m189m\\.nuget\\packages\\": {},
+    "C:\\Users\\ronla\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\m189m\\OneDrive\\Documents\\GitHub\\FinalProject\\scholarhsip-backend\\FinalProject.csproj",
+      "projectUniqueName": "C:\\Users\\ronla\\OneDrive\\מסמכים\\GitHub\\FinalProject\\scholarhsip-backend\\FinalProject.csproj",
       "projectName": "FinalProject",
-      "projectPath": "C:\\Users\\m189m\\OneDrive\\Documents\\GitHub\\FinalProject\\scholarhsip-backend\\FinalProject.csproj",
-      "packagesPath": "C:\\Users\\m189m\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\m189m\\OneDrive\\Documents\\GitHub\\FinalProject\\scholarhsip-backend\\obj\\",
+      "projectPath": "C:\\Users\\ronla\\OneDrive\\מסמכים\\GitHub\\FinalProject\\scholarhsip-backend\\FinalProject.csproj",
+      "packagesPath": "C:\\Users\\ronla\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\ronla\\OneDrive\\מסמכים\\GitHub\\FinalProject\\scholarhsip-backend\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\m189m\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\ronla\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -2335,7 +2335,13 @@
         "warnAsError": [
           "NU1605"
         ]
-      }
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
       "net6.0": {
@@ -2377,7 +2383,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304\\RuntimeIdentifierGraph.json"
       }
     }
   },

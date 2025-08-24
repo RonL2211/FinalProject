@@ -1,55 +1,30 @@
 [
   {
-    "ContainingType": "FinalProject.Controllers.AuditTrailController",
-    "Method": "GetAuditTrail",
-    "RelativePath": "api/AuditTrail",
-    "HttpMethod": "GET",
+    "ContainingType": "FinalProject.Controllers.AppealController",
+    "Method": "CreateAppeal",
+    "RelativePath": "api/Appeal",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "fromDate",
-        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "toDate",
-        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "userId",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "action",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "entityType",
-        "Type": "System.String",
-        "IsRequired": false
+        "Name": "model",
+        "Type": "FinalProject.Controllers.CreateAppealModel",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []
   },
   {
-    "ContainingType": "FinalProject.Controllers.AuditTrailController",
-    "Method": "GetEntityHistory",
-    "RelativePath": "api/AuditTrail/entity/{entityType}/{entityId}",
+    "ContainingType": "FinalProject.Controllers.AppealController",
+    "Method": "GetAppealById",
+    "RelativePath": "api/Appeal/{id}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "entityType",
-        "Type": "System.String",
-        "IsRequired": true
-      },
-      {
-        "Name": "entityId",
+        "Name": "id",
         "Type": "System.Int32",
         "IsRequired": true
       }
@@ -57,19 +32,66 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "FinalProject.Controllers.AuditTrailController",
-    "Method": "GetUserActions",
-    "RelativePath": "api/AuditTrail/user/{userId}",
+    "ContainingType": "FinalProject.Controllers.AppealController",
+    "Method": "RespondToAppeal",
+    "RelativePath": "api/Appeal/{id}/respond",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "FinalProject.Controllers.RespondToAppealModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinalProject.Controllers.AppealController",
+    "Method": "CanUserAppeal",
+    "RelativePath": "api/Appeal/can-appeal/{instanceId}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "userId",
-        "Type": "System.String",
+        "Name": "instanceId",
+        "Type": "System.Int32",
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinalProject.Controllers.AppealController",
+    "Method": "GetAppealsByInstanceId",
+    "RelativePath": "api/Appeal/instance/{instanceId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "instanceId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinalProject.Controllers.AppealController",
+    "Method": "GetPendingAppeals",
+    "RelativePath": "api/Appeal/pending",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -86,16 +108,6 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.AuthController",
-    "Method": "Logout",
-    "RelativePath": "api/Auth/logout",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -160,6 +172,101 @@
     "Parameters": [
       {
         "Name": "facultyId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinalProject.Controllers.FieldAnswerController",
+    "Method": "GetInstanceAnswers",
+    "RelativePath": "api/FieldAnswer/instance/{instanceId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "instanceId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinalProject.Controllers.FieldAnswerController",
+    "Method": "SaveFieldAnswers",
+    "RelativePath": "api/FieldAnswer/instance/{instanceId}/answers",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "instanceId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "FinalProject.Controllers.SaveAnswersModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinalProject.Controllers.FieldAnswerController",
+    "Method": "GetFieldAnswer",
+    "RelativePath": "api/FieldAnswer/instance/{instanceId}/field/{fieldId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "instanceId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "fieldId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinalProject.Controllers.FieldAnswerController",
+    "Method": "DeleteAnswer",
+    "RelativePath": "api/FieldAnswer/instance/{instanceId}/field/{fieldId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "instanceId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "fieldId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinalProject.Controllers.FieldAnswerController",
+    "Method": "GetAnswerStatistics",
+    "RelativePath": "api/FieldAnswer/instance/{instanceId}/statistics",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "instanceId",
         "Type": "System.Int32",
         "IsRequired": true
       }
@@ -241,11 +348,6 @@
         "Name": "id",
         "Type": "System.Int32",
         "IsRequired": true
-      },
-      {
-        "Name": "currentUserId",
-        "Type": "System.String",
-        "IsRequired": true
       }
     ],
     "ReturnTypes": []
@@ -261,22 +363,6 @@
       {
         "Name": "id",
         "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormController",
-    "Method": "GetFormsByAcademicYear",
-    "RelativePath": "api/Form/academicYear/{year}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "year",
-        "Type": "System.String",
         "IsRequired": true
       }
     ],
@@ -309,27 +395,6 @@
       {
         "Name": "id",
         "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormInstanceController",
-    "Method": "AppealInstance",
-    "RelativePath": "api/FormInstance/{id}/appeal",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "model",
-        "Type": "FinalProject.Controllers.AppealInstanceModel",
         "IsRequired": true
       }
     ],
@@ -379,48 +444,6 @@
   },
   {
     "ContainingType": "FinalProject.Controllers.FormInstanceController",
-    "Method": "ReturnForRevision",
-    "RelativePath": "api/FormInstance/{id}/return",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "model",
-        "Type": "FinalProject.Controllers.ReturnInstanceModel",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormInstanceController",
-    "Method": "MarkAsUnderReview",
-    "RelativePath": "api/FormInstance/{id}/review",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "model",
-        "Type": "FinalProject.Controllers.ReviewInstanceModel",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormInstanceController",
     "Method": "SubmitInstance",
     "RelativePath": "api/FormInstance/{id}/submit",
     "HttpMethod": "POST",
@@ -442,34 +465,12 @@
   },
   {
     "ContainingType": "FinalProject.Controllers.FormInstanceController",
-    "Method": "ValidateInstance",
-    "RelativePath": "api/FormInstance/{id}/validate",
+    "Method": "GetInstancesForReview",
+    "RelativePath": "api/FormInstance/for-review",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormInstanceController",
-    "Method": "CreateInstance",
-    "RelativePath": "api/FormInstance/form/{formId}",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "formId",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -490,31 +491,15 @@
   },
   {
     "ContainingType": "FinalProject.Controllers.FormInstanceController",
-    "Method": "GetInstancesStatisticsByForm",
-    "RelativePath": "api/FormInstance/form/{formId}/stats",
-    "HttpMethod": "GET",
+    "Method": "CreateInstance",
+    "RelativePath": "api/FormInstance/form/{formId}",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
         "Name": "formId",
         "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormInstanceController",
-    "Method": "GetInstancesByStage",
-    "RelativePath": "api/FormInstance/stage/{stage}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "stage",
-        "Type": "System.String",
         "IsRequired": true
       }
     ],
@@ -547,22 +532,6 @@
       {
         "Name": "section",
         "Type": "FinalProject.DAL.Models.FormSection",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormSectionController",
-    "Method": "GetSectionById",
-    "RelativePath": "api/FormSection/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
         "IsRequired": true
       }
     ],
@@ -607,6 +576,22 @@
   },
   {
     "ContainingType": "FinalProject.Controllers.FormSectionController",
+    "Method": "GetSectionById",
+    "RelativePath": "api/FormSection/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FinalProject.Controllers.FormSectionController",
     "Method": "GetSectionFields",
     "RelativePath": "api/FormSection/{id}/fields",
     "HttpMethod": "GET",
@@ -623,27 +608,6 @@
   },
   {
     "ContainingType": "FinalProject.Controllers.FormSectionController",
-    "Method": "AssignSectionPermission",
-    "RelativePath": "api/FormSection/{id}/permissions",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "permission",
-        "Type": "FinalProject.DAL.Models.SectionPermission",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormSectionController",
     "Method": "GetSectionsByFormId",
     "RelativePath": "api/FormSection/form/{formId}",
     "HttpMethod": "GET",
@@ -652,133 +616,6 @@
     "Parameters": [
       {
         "Name": "formId",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormSectionController",
-    "Method": "RemoveSectionPermission",
-    "RelativePath": "api/FormSection/permissions/{permissionId}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "permissionId",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormSubSectionController",
-    "Method": "GetAllFormSubSections",
-    "RelativePath": "api/FormSubSection",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormSubSectionController",
-    "Method": "AddFormSubSection",
-    "RelativePath": "api/FormSubSection",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "subSection",
-        "Type": "FinalProject.DAL.Models.FormSubSection",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormSubSectionController",
-    "Method": "GetFormSubSectionById",
-    "RelativePath": "api/FormSubSection/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormSubSectionController",
-    "Method": "UpdateFormSubSection",
-    "RelativePath": "api/FormSubSection/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "subSection",
-        "Type": "FinalProject.DAL.Models.FormSubSection",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormSubSectionController",
-    "Method": "DeleteFormSubSection",
-    "RelativePath": "api/FormSubSection/{id}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormSubSectionController",
-    "Method": "GetFormSubSectionsByFormId",
-    "RelativePath": "api/FormSubSection/form/{formId}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "formId",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FinalProject.Controllers.FormSubSectionController",
-    "Method": "GetFormSubSectionsBySectionId",
-    "RelativePath": "api/FormSubSection/section/{sectionId}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "sectionId",
         "Type": "System.Int32",
         "IsRequired": true
       }
