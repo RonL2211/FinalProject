@@ -120,7 +120,6 @@ export const hasRole = (roleName) => {
     );
   }
   
-  // גיבוי לבדיקת position (לתמיכה לאחור)
   if (user.position) {
     return user.position === roleName;
   }
