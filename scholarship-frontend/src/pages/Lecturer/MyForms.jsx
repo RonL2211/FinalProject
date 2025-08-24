@@ -4,7 +4,6 @@ import { Container, Row, Col, Card, Button, Badge, Alert, Modal, Table, Dropdown
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { instanceService } from '../../services/instanceService';
-import { appealService } from '../../services/appealService';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorAlert from '../../components/UI/ErrorAlert';
 
@@ -285,16 +284,7 @@ const MyForms = () => {
       </Dropdown.Item>
     )}
     
-    {/* ערעור - רק אם נדחה */}
-    {statusConfig.canAppeal && (
-      <>
-        <Dropdown.Divider />
-        <Dropdown.Item as={Link} to={`/lecturer/appeal/${instance.instanceId}`}>
-          <i className="bi bi-megaphone me-2"></i>
-          הגש ערעור
-        </Dropdown.Item>
-      </>
-    )}
+    
   </Dropdown.Menu>
 </Dropdown>
                             </td>

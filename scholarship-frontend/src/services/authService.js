@@ -1,7 +1,8 @@
-// src/services/authService.js - מתוקן
+// src/services/authService.js 
 import axios from 'axios';
 
-const API_BASE_URL = 'https://localhost:7230/api';
+// const API_BASE_URL = 'https://localhost:7230/api';
+const API_BASE_URL = 'https://proj.ruppin.ac.il/bgroup1/prod/api';
 
 // הגדרת axios עם ברירת מחדל
 const api = axios.create({

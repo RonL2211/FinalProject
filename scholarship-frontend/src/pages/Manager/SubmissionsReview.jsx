@@ -6,7 +6,6 @@ import { instanceService } from '../../services/instanceService';
 import { formService } from '../../services/formService';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorAlert from '../../components/UI/ErrorAlert';
-import Swal from 'sweetalert2';
 
 const SubmissionsReview = () => {
   const [submissions, setSubmissions] = useState([]);
@@ -41,11 +40,20 @@ const SubmissionsReview = () => {
       // טעינת כל הטפסים
       const allForms = await formService.getAllForms();
       setForms(allForms);
+      console.log('All forms loaded:', allForms);
 
-      // טעינת המופעים לבדיקה - מנהל סטודנטים יקבל רק את מה שמיועד לו
+      // טעינת המופעים לבדיקה - מנהל סטודנטים יקבל את כל הטפסים
       const reviewSubmissions = await instanceService.getInstancesForReview();
       
-      console.log('Submissions for review:', reviewSubmissions);
+      console.log('Raw submissions from server:', reviewSubmissions);
+      console.log('Number of submissions:', reviewSubmissions?.length || 0);
+
+      // בדיקה אם יש נתונים
+      if (!reviewSubmissions || reviewSubmissions.length === 0) {
+        console.warn('No submissions returned from server!');
+        setSubmissions([]);
+        return;
+      }
 
       // הוספת פרטים נוספים לכל הגשה
       const enrichedSubmissions = await Promise.all(
@@ -68,6 +76,7 @@ const SubmissionsReview = () => {
         })
       );
 
+      console.log('Enriched submissions:', enrichedSubmissions);
       setSubmissions(enrichedSubmissions);
     } catch (err) {
       console.error('Error loading data:', err);
@@ -83,8 +92,10 @@ const SubmissionsReview = () => {
     // סינון לפי טאב (סטטוס)
     switch (activeTab) {
       case 'pending':
-        // טפסים שממתינים לאישור סופי של מנהל סטודנטים
+        // כל הטפסים שממתינים לטיפול כלשהו
         filtered = filtered.filter(s => 
+          s.currentStage === 'Submitted' ||
+          s.currentStage === 'ApprovedByDepartment' ||
           s.currentStage === 'ApprovedByDean'
         );
         break;
@@ -149,10 +160,7 @@ const SubmissionsReview = () => {
         await instanceService.approveInstance(instanceId, reviewComments);
         
         // הצגת הודעת הצלחה
-        Swal.fire({
-          icon: 'success',
-          title: 'הטופס אושר סופית בהצלחה!',
-        });
+        alert('הטופס אושר סופית בהצלחה!');
       } else if (reviewAction === 'reject') {
         // דחייה
         if (!reviewComments.trim()) {
@@ -163,10 +171,7 @@ const SubmissionsReview = () => {
         await instanceService.rejectInstance(instanceId, reviewComments);
         
         // הצגת הודעת הצלחה
-        Swal.fire({
-          icon: 'error',
-          title: 'הטופס נדחה.',
-        });
+        alert('הטופס נדחה.');
       }
 
       // רענון הרשימה
@@ -241,10 +246,10 @@ const SubmissionsReview = () => {
         <Col>
           <h2>
             <i className="bi bi-clipboard-check me-2"></i>
-            אישור סופי של טפסים
+            ניהול טפסים - מנהל סטודנטים
           </h2>
           <p className="text-muted">
-            אישור סופי של טפסים שעברו אישור דיקאן
+            סקירה כללית של כל הטפסים במערכת
           </p>
         </Col>
       </Row>
@@ -264,7 +269,7 @@ const SubmissionsReview = () => {
             <Card.Body>
               <i className="bi bi-clock text-warning" style={{ fontSize: '2rem' }}></i>
               <h3 className="mt-2 mb-1 text-warning">{getSubmissionsByStatus('pending')}</h3>
-              <small className="text-muted">ממתינים לאישור סופי</small>
+              <small className="text-muted">ממתינים לטיפול</small>
             </Card.Body>
           </Card>
         </Col>
@@ -427,6 +432,7 @@ const SubmissionsReview = () => {
                         const userId = submission.userID;
                         const fullName = submission.fullName || `${submission.firstName || ''} ${submission.lastName || ''}`.trim();
                         const currentStatus = submission.currentStage;
+                        // מנהל סטודנטים יכול לאשר/לדחות רק טפסים שעברו דיקאן
                         const canReview = currentStatus === 'ApprovedByDean';
 
                         return (

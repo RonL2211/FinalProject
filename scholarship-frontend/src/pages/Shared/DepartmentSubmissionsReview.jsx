@@ -39,9 +39,9 @@ const DepartmentSubmissionsReview = () => {
   const determineUserRole = () => {
     const user = getCurrentUser();
     if (user?.roles) {
-      if (user.roles.includes('דיקאן')) {
+      if (user.roles[0].roleName===('דיקאן')) {
         setUserRole('דיקאן');
-      } else if (user.roles.includes('ראש מחלקה') || user.roles.includes('ראש התמחות')) {
+      } else if (user.roles[0].roleName=== ('ראש מחלקה') || user.roles[0].roleName=== ('ראש התמחות')) {
         setUserRole('ראש מחלקה');
       }
     }
@@ -240,10 +240,14 @@ const DepartmentSubmissionsReview = () => {
   };
 
   const getSubmissionsByStatus = (status) => {
+    console.log(status)
+    console.log(userRole)
     switch (status) {
       case 'pending':
         // טפסים הממתינים לאישור המשתמש הנוכחי
         if (userRole === 'דיקאן') {
+                    console.log(submissions)
+
           return submissions.filter(s => 
             s.currentStage === 'ApprovedByDepartment' || s.status === 'ApprovedByDepartment'
           ).length;

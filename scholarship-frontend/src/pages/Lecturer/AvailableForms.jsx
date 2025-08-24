@@ -264,16 +264,7 @@ const AvailableForms = () => {
                             <i className="bi bi-eye me-1"></i>
                             צפה
                           </Button>
-                          {status === 'Rejected' && (
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => navigate(`/lecturer/appeal/${activeInstance.instanceId}`)}
-                            >
-                              <i className="bi bi-exclamation-triangle me-1"></i>
-                              הגש ערעור
-                            </Button>
-                          )}
+                        
                         </>
                       )}
                     </div>

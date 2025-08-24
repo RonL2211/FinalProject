@@ -62,6 +62,8 @@ const DeanReviewForms = () => {
       setLoading(false);
     }
   };
+        console.log("filtered", forms)
+
 
   const filterForms = () => {
     let filtered = [...forms];

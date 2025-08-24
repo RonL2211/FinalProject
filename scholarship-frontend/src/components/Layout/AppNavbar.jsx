@@ -22,7 +22,7 @@ const AppNavbar = () => {
       items.push(
         { path: '/manager', label: 'דף הבית', exact: true },
         { path: '/manager/forms', label: 'ניהול טפסים' },
-        { path: '/manager/appeals', label: 'ערעורים' },
+        // { path: '/manager/appeals', label: 'ערעורים' },
         { path: '/manager/users', label: 'ניהול משתמשים' },
         { path: '/manager/submissions', label: 'סקירת הגשות' }
       );
@@ -30,9 +30,9 @@ const AppNavbar = () => {
     // דיקאן - יכול לראות דפי מרצה + דפי דיקאן
     else if (hasRole('דיקאן')) {
       items.push(
-        { path: '/dean', label: 'ניהול פקולטה', exact: true },
+        // { path: '/dean', label: 'ניהול פקולטה', exact: true },
         { path: '/department/submissions', label: 'בדיקת טפסים' },
-        { path: '/dean/reports', label: 'דוחות פקולטה' },
+        // { path: '/dean/reports', label: 'דוחות פקולטה' },
         { divider: true },
         { path: '/lecturer', label: 'דפי מרצה', exact: true },
         { path: '/lecturer/forms', label: 'טפסים זמינים' },
@@ -42,10 +42,8 @@ const AppNavbar = () => {
     // ראש מחלקה - יכול לראות דפי מרצה + דפי ראש מחלקה
     else if (hasRole('ראש מחלקה')) {
       items.push(
-        // { path: '/dept-head', label: 'ניהול מחלקה', exact: true },
-        // { path: '/dept-head/review', label: 'בדיקת טפסים' },
         { path: '/department/submissions', label: 'בדיקת טפסים', exact: true },
-        { path: '/dept-head/reports', label: 'דוחות מחלקה' },
+        // { path: '/dept-head/reports', label: 'דוחות מחלקה' },
         { divider: true },
         { path: '/lecturer', label: 'דפי מרצה', exact: true },
         { path: '/lecturer/forms', label: 'טפסים זמינים' },

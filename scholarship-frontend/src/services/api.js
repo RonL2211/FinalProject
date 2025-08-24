@@ -1,7 +1,8 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = 'https://localhost:7230/api';
+// const API_BASE_URL = 'https://localhost:7230/api';
+const API_BASE_URL = 'https://proj.ruppin.ac.il/bgroup1/prod/api';
 
 // יצירת instance של axios עם הגדרות בסיס
 export const api = axios.create({
