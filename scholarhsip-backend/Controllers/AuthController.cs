@@ -32,7 +32,7 @@ namespace FinalProject.Controllers
         {
             if (string.IsNullOrEmpty(model.PersonId) || string.IsNullOrEmpty(model.Password))
                 return BadRequest("PersonId and password are required");
-
+                                                                                                     
             var person = _authService.Authenticate(model.PersonId, model.Password);
             if (person == null)
                 return Unauthorized("Invalid personId or password");

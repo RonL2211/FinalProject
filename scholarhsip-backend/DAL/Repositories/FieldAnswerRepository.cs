@@ -3,6 +3,7 @@ using FinalProject.DAL.Models;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace FinalProject.DAL.Repositories
@@ -27,19 +28,19 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetAnswersByInstanceId", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetAnswersByInstanceId", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     FieldAnswerInstance answer = new FieldAnswerInstance
                     {
-                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
-                        FieldID = Convert.ToInt32(dataReader["FieldID"]),
-                        Answer = dataReader["Answer"].ToString(),
-                        AnswerDate = dataReader["answerDate"] != DBNull.Value ?
-                            Convert.ToDateTime(dataReader["answerDate"]) : null,
-                        UpdateDate = dataReader["updateDate"] != DBNull.Value ?
-                            Convert.ToDateTime(dataReader["updateDate"]) : null
+                        InstanceId = Convert.ToInt32(row["InstanceId"]),
+                        FieldID = Convert.ToInt32(row["FieldID"]),
+                        Answer = row["Answer"].ToString(),
+                        AnswerDate = row["answerDate"] != DBNull.Value ?
+                            Convert.ToDateTime(row["answerDate"]) : null,
+                        UpdateDate = row["updateDate"] != DBNull.Value ?
+                            Convert.ToDateTime(row["updateDate"]) : null
                     };
                     answerList.Add(answer);
                 }
@@ -65,20 +66,22 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetAnswer", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetAnswer", paramDic);
                 FieldAnswerInstance answer = null;
 
-                if (dataReader.Read())
+                DataRow row = dataTable.Rows[0];
+
+                if (dataTable.Rows.Count > 0)
                 {
                     answer = new FieldAnswerInstance
                     {
-                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
-                        FieldID = Convert.ToInt32(dataReader["FieldID"]),
-                        Answer = dataReader["Answer"].ToString(),
-                        AnswerDate = dataReader["answerDate"] != DBNull.Value ?
-                            Convert.ToDateTime(dataReader["answerDate"]) : null,
-                        UpdateDate = dataReader["updateDate"] != DBNull.Value ?
-                            Convert.ToDateTime(dataReader["updateDate"]) : null
+                        InstanceId = Convert.ToInt32(row["InstanceId"]),
+                        FieldID = Convert.ToInt32(row["FieldID"]),
+                        Answer = row["Answer"].ToString(),
+                        AnswerDate = row["answerDate"] != DBNull.Value ?
+                            Convert.ToDateTime(row["answerDate"]) : null,
+                        UpdateDate = row["updateDate"] != DBNull.Value ?
+                            Convert.ToDateTime(row["updateDate"]) : null
                     };
                 }
 
@@ -259,19 +262,20 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetAnswerStatistics", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetAnswerStatistics", paramDic);
                 AnswerStatistics stats = new AnswerStatistics();
 
-                if (dataReader.Read())
+                DataRow row = dataTable.Rows[0];
+                if (dataTable.Rows.Count > 0)
                 {
-                    stats.TotalFields = dataReader["TotalFields"] != DBNull.Value ?
-                        Convert.ToInt32(dataReader["TotalFields"]) : 0;
-                    stats.AnsweredFields = dataReader["AnsweredFields"] != DBNull.Value ?
-                        Convert.ToInt32(dataReader["AnsweredFields"]) : 0;
-                    stats.RequiredFieldsAnswered = dataReader["RequiredFieldsAnswered"] != DBNull.Value ?
-                        Convert.ToInt32(dataReader["RequiredFieldsAnswered"]) : 0;
-                    stats.LastUpdateDate = dataReader["LastUpdateDate"] != DBNull.Value ?
-                        Convert.ToDateTime(dataReader["LastUpdateDate"]) : null;
+                    stats.TotalFields = row["TotalFields"] != DBNull.Value ?
+                        Convert.ToInt32(row["TotalFields"]) : 0;
+                    stats.AnsweredFields = row["AnsweredFields"] != DBNull.Value ?
+                        Convert.ToInt32(row["AnsweredFields"]) : 0;
+                    stats.RequiredFieldsAnswered = row["RequiredFieldsAnswered"] != DBNull.Value ?
+                        Convert.ToInt32(row["RequiredFieldsAnswered"]) : 0;
+                    stats.LastUpdateDate = row["LastUpdateDate"] != DBNull.Value ?
+                        Convert.ToDateTime(row["LastUpdateDate"]) : null;
                 }
 
                 return stats;

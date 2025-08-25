@@ -3,6 +3,7 @@ using FinalProject.DAL.Models;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace FinalProject.DAL.Repositories
@@ -38,20 +39,20 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetPendingAppeals", null);
+                DataTable dataTable =  ExecuteQuery("spGetPendingAppeals");
 
-                while (dataReader.Read())
-                {
+                    foreach(DataRow row in dataTable.Rows) 
+                    {
                     Appeal appeal = new Appeal
                     {
-                        AppealID = Convert.ToInt32(dataReader["AppealID"]),
-                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
-                        AppealReason = dataReader["AppealReason"].ToString(),
-                        AppealDate = Convert.ToDateTime(dataReader["AppealDate"]),
-                        AppealStatus = dataReader["AppealStatus"].ToString(),
-                        ReviewerResponse = dataReader["ReviewerResponse"]?.ToString(),
-                        ReviewDate = dataReader["ReviewDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["ReviewDate"]) : null,
-                        ReviewedBy = dataReader["ReviewedBy"]?.ToString()
+                        AppealID = Convert.ToInt32(row["AppealID"]),
+                        InstanceId = Convert.ToInt32(row["InstanceId"]),
+                        AppealReason = row["AppealReason"].ToString(),
+                        AppealDate = Convert.ToDateTime(row["AppealDate"]),
+                        AppealStatus = row["AppealStatus"].ToString(),
+                        ReviewerResponse = row["ReviewerResponse"]?.ToString(),
+                        ReviewDate = row["ReviewDate"] != DBNull.Value ? Convert.ToDateTime(row["ReviewDate"]) : null,
+                        ReviewedBy = row["ReviewedBy"]?.ToString()
                     };
                     appealList.Add(appeal);
                 }
@@ -73,21 +74,22 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetAppealById", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetAppealById", paramDic);
                 Appeal appeal = null;
+                DataRow row = dataTable.Rows[0];
 
-                if (dataReader.Read())
+                if (dataTable.Rows.Count > 0)
                 {
                     appeal = new Appeal
                     {
-                        AppealID = Convert.ToInt32(dataReader["AppealID"]),
-                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
-                        AppealReason = dataReader["AppealReason"].ToString(),
-                        AppealDate = Convert.ToDateTime(dataReader["AppealDate"]),
-                        AppealStatus = dataReader["AppealStatus"].ToString(),
-                        ReviewerResponse = dataReader["ReviewerResponse"]?.ToString(),
-                        ReviewDate = dataReader["ReviewDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["ReviewDate"]) : null,
-                        ReviewedBy = dataReader["ReviewedBy"]?.ToString()
+                        AppealID = Convert.ToInt32(row["AppealID"]),
+                        InstanceId = Convert.ToInt32(row["InstanceId"]),
+                        AppealReason = row["AppealReason"].ToString(),
+                        AppealDate = Convert.ToDateTime(row["AppealDate"]),
+                        AppealStatus = row["AppealStatus"].ToString(),
+                        ReviewerResponse = row["ReviewerResponse"]?.ToString(),
+                        ReviewDate = row["ReviewDate"] != DBNull.Value ? Convert.ToDateTime(row["ReviewDate"]) : null,
+                        ReviewedBy = row["ReviewedBy"]?.ToString()
                     };
                 }
 
@@ -131,20 +133,20 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetAppealsByInstanceId", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetAppealsByInstanceId", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows) 
                 {
                     Appeal appeal = new Appeal
                     {
-                        AppealID = Convert.ToInt32(dataReader["AppealID"]),
-                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
-                        AppealReason = dataReader["AppealReason"].ToString(),
-                        AppealDate = Convert.ToDateTime(dataReader["AppealDate"]),
-                        AppealStatus = dataReader["AppealStatus"].ToString(),
-                        ReviewerResponse = dataReader["ReviewerResponse"]?.ToString(),
-                        ReviewDate = dataReader["ReviewDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["ReviewDate"]) : null,
-                        ReviewedBy = dataReader["ReviewedBy"]?.ToString()
+                        AppealID = Convert.ToInt32(row["AppealID"]),
+                        InstanceId = Convert.ToInt32(row["InstanceId"]),
+                        AppealReason = row["AppealReason"] != DBNull.Value ? row["AppealReason"].ToString() : null,
+                        AppealDate = Convert.ToDateTime(row["AppealDate"]),
+                        AppealStatus = row["AppealStatus"].ToString(),
+                        ReviewerResponse = row["ReviewerResponse"]?.ToString(),
+                        ReviewDate = row["ReviewDate"] != DBNull.Value ? Convert.ToDateTime(row["ReviewDate"]) : null,
+                        ReviewedBy = row["ReviewedBy"]?.ToString()
                     };
                     appealList.Add(appeal);
                 }

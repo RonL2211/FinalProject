@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace FinalProject.DAL.Repositories
@@ -17,26 +18,26 @@ namespace FinalProject.DAL.Repositories
             List<Form> formList = new List<Form>();
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetAllForms", null);
+                DataTable dataTable =  ExecuteQuery("spGetAllForms", null);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     Form form = new Form
                     {
-                        FormID = Convert.ToInt32(dataReader["FormID"]),
-                        FormName = dataReader["formName"].ToString(),
-                        CreationDate = dataReader["creationDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["creationDate"]) : null,
-                        DueDate = dataReader["dueDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["dueDate"]) : null,
-                        Description = dataReader["description"].ToString(),
-                        Instructions = dataReader["instructions"].ToString(),
-                        AcademicYear = dataReader["AcademicYear"].ToString(),
-                        Semester = dataReader["Semester"] != DBNull.Value ? Convert.ToChar(dataReader["Semester"]) : null,
-                        StartDate = dataReader["StartDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["StartDate"]) : null,
-                        CreatedBy = dataReader["CreatedBy"].ToString(),
-                        LastModifiedBy = dataReader["LastModifiedBy"]?.ToString(),
-                        LastModifiedDate = dataReader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["LastModifiedDate"]) : null,
-                        IsActive = Convert.ToBoolean(dataReader["IsActive"]),
-                        IsPublished = Convert.ToBoolean(dataReader["IsPublished"])
+                        FormID = Convert.ToInt32(row["FormID"]),
+                        FormName = row["formName"].ToString(),
+                        CreationDate = row["creationDate"] != DBNull.Value ? Convert.ToDateTime(row["creationDate"]) : null,
+                        DueDate = row["dueDate"] != DBNull.Value ? Convert.ToDateTime(row["dueDate"]) : null,
+                        Description = row["description"].ToString(),
+                        Instructions = row["instructions"].ToString(),
+                        AcademicYear = row["AcademicYear"].ToString(),
+                        Semester = row["Semester"] != DBNull.Value ? Convert.ToChar(row["Semester"]) : null,
+                        StartDate = row["StartDate"] != DBNull.Value ? Convert.ToDateTime(row["StartDate"]) : null,
+                        CreatedBy = row["CreatedBy"].ToString(),
+                        LastModifiedBy = row["LastModifiedBy"]?.ToString(),
+                        LastModifiedDate = row["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(row["LastModifiedDate"]) : null,
+                        IsActive = Convert.ToBoolean(row["IsActive"]),
+                        IsPublished = Convert.ToBoolean(row["IsPublished"])
                     };
                     formList.Add(form);
                 }
@@ -58,27 +59,27 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetFormById", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetFormById", paramDic);
                 Form form = null;
-
-                if (dataReader.Read())
+            DataRow row = dataTable.Rows[0];
+                if (dataTable.Rows.Count > 0)
                 {
                     form = new Form
                     {
-                        FormID = Convert.ToInt32(dataReader["FormID"]),
-                        FormName = dataReader["formName"].ToString(),
-                        CreationDate = dataReader["creationDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["creationDate"]) : null,
-                        DueDate = dataReader["dueDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["dueDate"]) : null,
-                        Description = dataReader["description"].ToString(),
-                        Instructions = dataReader["instructions"].ToString(),
-                        AcademicYear = dataReader["AcademicYear"].ToString(),
-                        Semester = dataReader["Semester"] != DBNull.Value ? Convert.ToChar(dataReader["Semester"]) : null,
-                        StartDate = dataReader["StartDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["StartDate"]) : null,
-                        CreatedBy = dataReader["CreatedBy"].ToString(),
-                        LastModifiedBy = dataReader["LastModifiedBy"]?.ToString(),
-                        LastModifiedDate = dataReader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["LastModifiedDate"]) : null,
-                        IsActive = Convert.ToBoolean(dataReader["IsActive"]),
-                        IsPublished = Convert.ToBoolean(dataReader["IsPublished"])
+                        FormID = Convert.ToInt32(row["FormID"]),
+                        FormName = row["formName"].ToString(),
+                        CreationDate = row["creationDate"] != DBNull.Value ? Convert.ToDateTime(row["creationDate"]) : null,
+                        DueDate = row["dueDate"] != DBNull.Value ? Convert.ToDateTime(row["dueDate"]) : null,
+                        Description = row["description"].ToString(),
+                        Instructions = row["instructions"].ToString(),
+                        AcademicYear = row["AcademicYear"].ToString(),
+                        Semester = row["Semester"] != DBNull.Value ? Convert.ToChar(row["Semester"]) : null,
+                        StartDate = row["StartDate"] != DBNull.Value ? Convert.ToDateTime(row["StartDate"]) : null,
+                        CreatedBy = row["CreatedBy"].ToString(),
+                        LastModifiedBy = row["LastModifiedBy"]?.ToString(),
+                        LastModifiedDate = row["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(row["LastModifiedDate"]) : null,
+                        IsActive = Convert.ToBoolean(row["IsActive"]),
+                        IsPublished = Convert.ToBoolean(row["IsPublished"])
                     };
                 }
 
@@ -176,26 +177,26 @@ namespace FinalProject.DAL.Repositories
             List<Form> formList = new List<Form>();
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetFormsByAcademicYear", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetFormsByAcademicYear", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     Form form = new Form
                     {
-                        FormID = Convert.ToInt32(dataReader["FormID"]),
-                        FormName = dataReader["formName"].ToString(),
-                        CreationDate = dataReader["creationDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["creationDate"]) : null,
-                        DueDate = dataReader["dueDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["dueDate"]) : null,
-                        Description = dataReader["description"].ToString(),
-                        Instructions = dataReader["instructions"].ToString(),
-                        AcademicYear = dataReader["AcademicYear"].ToString(),
-                        Semester = dataReader["Semester"] != DBNull.Value ? Convert.ToChar(dataReader["Semester"]) : null,
-                        StartDate = dataReader["StartDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["StartDate"]) : null,
-                        CreatedBy = dataReader["CreatedBy"].ToString(),
-                        LastModifiedBy = dataReader["LastModifiedBy"]?.ToString(),
-                        LastModifiedDate = dataReader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["LastModifiedDate"]) : null,
-                        IsActive = Convert.ToBoolean(dataReader["IsActive"]),
-                        IsPublished = Convert.ToBoolean(dataReader["IsPublished"])
+                        FormID = Convert.ToInt32(row["FormID"]),
+                        FormName = row["formName"].ToString(),
+                        CreationDate = row["creationDate"] != DBNull.Value ? Convert.ToDateTime(row["creationDate"]) : null,
+                        DueDate = row["dueDate"] != DBNull.Value ? Convert.ToDateTime(row["dueDate"]) : null,
+                        Description = row["description"].ToString(),
+                        Instructions = row["instructions"].ToString(),
+                        AcademicYear = row["AcademicYear"].ToString(),
+                        Semester = row["Semester"] != DBNull.Value ? Convert.ToChar(row["Semester"]) : null,
+                        StartDate = row["StartDate"] != DBNull.Value ? Convert.ToDateTime(row["StartDate"]) : null,
+                        CreatedBy = row["CreatedBy"].ToString(),
+                        LastModifiedBy = row["LastModifiedBy"]?.ToString(),
+                        LastModifiedDate = row["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(row["LastModifiedDate"]) : null,
+                        IsActive = Convert.ToBoolean(row["IsActive"]),
+                        IsPublished = Convert.ToBoolean(row["IsPublished"])
                     };
                     formList.Add(form);
                 }

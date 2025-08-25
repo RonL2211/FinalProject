@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace FinalProject.DAL.Repositories
@@ -23,21 +24,21 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetInstancesByUserId", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetInstancesByUserId", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     FormInstance instance = new FormInstance
                     {
-                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
-                        FormId = Convert.ToInt32(dataReader["FormId"]),
-                        UserID = dataReader["UserID"].ToString(),
-                        CreatedDate = dataReader["createdDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["createdDate"]) : null,
-                        CurrentStage = dataReader["CurrentStage"].ToString(),
-                        TotalScore = dataReader["TotalScore"] != DBNull.Value ? Convert.ToDecimal(dataReader["TotalScore"]) : null,
-                        SubmissionDate = dataReader["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["SubmissionDate"]) : null,
-                        LastModifiedDate = dataReader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["LastModifiedDate"]) : null,
-                        Comments = dataReader["Comments"].ToString()
+                        InstanceId = Convert.ToInt32(row["InstanceId"]),
+                        FormId = Convert.ToInt32(row["FormId"]),
+                        UserID = row["UserID"].ToString(),
+                        CreatedDate = row["createdDate"] != DBNull.Value ? Convert.ToDateTime(row["createdDate"]) : null,
+                        CurrentStage = row["CurrentStage"].ToString(),
+                        TotalScore = row["TotalScore"] != DBNull.Value ? Convert.ToDecimal(row["TotalScore"]) : null,
+                        SubmissionDate = row["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(row["SubmissionDate"]) : null,
+                        LastModifiedDate = row["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(row["LastModifiedDate"]) : null,
+                        Comments = row["Comments"].ToString()
                     };
                     instanceList.Add(instance);
                 }
@@ -59,22 +60,24 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetInstanceById", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetInstanceById", paramDic);
                 FormInstance instance = null;
 
-                if (dataReader.Read())
+                DataRow row = dataTable.Rows[0];
+
+                if (dataTable.Rows.Count > 0)
                 {
                     instance = new FormInstance
                     {
-                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
-                        FormId = Convert.ToInt32(dataReader["FormId"]),
-                        UserID = dataReader["UserID"].ToString(),
-                        CreatedDate = dataReader["createdDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["createdDate"]) : null,
-                        CurrentStage = dataReader["CurrentStage"].ToString(),
-                        TotalScore = dataReader["TotalScore"] != DBNull.Value ? Convert.ToDecimal(dataReader["TotalScore"]) : null,
-                        SubmissionDate = dataReader["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["SubmissionDate"]) : null,
-                        LastModifiedDate = dataReader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["LastModifiedDate"]) : null,
-                        Comments = dataReader["Comments"].ToString()
+                        InstanceId = Convert.ToInt32(row["InstanceId"]),
+                        FormId = Convert.ToInt32(row["FormId"]),
+                        UserID = row["UserID"].ToString(),
+                        CreatedDate = row["createdDate"] != DBNull.Value ? Convert.ToDateTime(row["createdDate"]) : null,
+                        CurrentStage = row["CurrentStage"].ToString(),
+                        TotalScore = row["TotalScore"] != DBNull.Value ? Convert.ToDecimal(row["TotalScore"]) : null,
+                        SubmissionDate = row["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(row["SubmissionDate"]) : null,
+                        LastModifiedDate = row["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(row["LastModifiedDate"]) : null,
+                        Comments = row["Comments"].ToString()
                     };
                 }
 
@@ -156,21 +159,21 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetInstancesByFormId", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetInstancesByFormId", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     FormInstance instance = new FormInstance
                     {
-                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
-                        FormId = Convert.ToInt32(dataReader["FormId"]),
-                        UserID = dataReader["UserID"].ToString(),
-                        CreatedDate = dataReader["createdDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["createdDate"]) : null,
-                        CurrentStage = dataReader["CurrentStage"].ToString(),
-                        TotalScore = dataReader["TotalScore"] != DBNull.Value ? Convert.ToDecimal(dataReader["TotalScore"]) : null,
-                        SubmissionDate = dataReader["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["SubmissionDate"]) : null,
-                        LastModifiedDate = dataReader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["LastModifiedDate"]) : null,
-                        Comments = dataReader["Comments"].ToString()
+                        InstanceId = Convert.ToInt32(row["InstanceId"]),
+                        FormId = Convert.ToInt32(row["FormId"]),
+                        UserID = row["UserID"].ToString(),
+                        CreatedDate = row["createdDate"] != DBNull.Value ? Convert.ToDateTime(row["createdDate"]) : null,
+                        CurrentStage = row["CurrentStage"].ToString(),
+                        TotalScore = row["TotalScore"] != DBNull.Value ? Convert.ToDecimal(row["TotalScore"]) : null,
+                        SubmissionDate = row["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(row["SubmissionDate"]) : null,
+                        LastModifiedDate = row["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(row["LastModifiedDate"]) : null,
+                        Comments = row["Comments"].ToString()
                     };
                     instanceList.Add(instance);
                 }
@@ -194,21 +197,21 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetInstancesByStage", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetInstancesByStage", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     FormInstance instance = new FormInstance
                     {
-                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
-                        FormId = Convert.ToInt32(dataReader["FormId"]),
-                        UserID = dataReader["UserID"].ToString(),
-                        CreatedDate = dataReader["createdDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["createdDate"]) : null,
-                        CurrentStage = dataReader["CurrentStage"].ToString(),
-                        TotalScore = dataReader["TotalScore"] != DBNull.Value ? Convert.ToDecimal(dataReader["TotalScore"]) : null,
-                        SubmissionDate = dataReader["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["SubmissionDate"]) : null,
-                        LastModifiedDate = dataReader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["LastModifiedDate"]) : null,
-                        Comments = dataReader["Comments"].ToString()
+                        InstanceId = Convert.ToInt32(row["InstanceId"]),
+                        FormId = Convert.ToInt32(row["FormId"]),
+                        UserID = row["UserID"].ToString(),
+                        CreatedDate = row["createdDate"] != DBNull.Value ? Convert.ToDateTime(row["createdDate"]) : null,
+                        CurrentStage = row["CurrentStage"].ToString(),
+                        TotalScore = row["TotalScore"] != DBNull.Value ? Convert.ToDecimal(row["TotalScore"]) : null,
+                        SubmissionDate = row["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(row["SubmissionDate"]) : null,
+                        LastModifiedDate = row["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(row["LastModifiedDate"]) : null,
+                        Comments = row["Comments"].ToString()
                     };
                     instanceList.Add(instance);
                 }
@@ -229,21 +232,21 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetAllInstances" , null);
+                DataTable dataTable =  ExecuteQuery("spGetAllInstances" , null);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     FormInstance instance = new FormInstance
                     {
-                        InstanceId = Convert.ToInt32(dataReader["InstanceId"]),
-                        FormId = Convert.ToInt32(dataReader["FormId"]),
-                        UserID = dataReader["UserID"].ToString(),
-                        CreatedDate = dataReader["createdDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["createdDate"]) : null,
-                        CurrentStage = dataReader["CurrentStage"].ToString(),
-                        TotalScore = dataReader["TotalScore"] != DBNull.Value ? Convert.ToDecimal(dataReader["TotalScore"]) : null,
-                        SubmissionDate = dataReader["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["SubmissionDate"]) : null,
-                        LastModifiedDate = dataReader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["LastModifiedDate"]) : null,
-                        Comments = dataReader["Comments"].ToString()
+                        InstanceId = Convert.ToInt32(row["InstanceId"]),
+                        FormId = Convert.ToInt32(row["FormId"]),
+                        UserID = row["UserID"].ToString(),
+                        CreatedDate = row["createdDate"] != DBNull.Value ? Convert.ToDateTime(row["createdDate"]) : null,
+                        CurrentStage = row["CurrentStage"].ToString(),
+                        TotalScore = row["TotalScore"] != DBNull.Value ? Convert.ToDecimal(row["TotalScore"]) : null,
+                        SubmissionDate = row["SubmissionDate"] != DBNull.Value ? Convert.ToDateTime(row["SubmissionDate"]) : null,
+                        LastModifiedDate = row["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(row["LastModifiedDate"]) : null,
+                        Comments = row["Comments"].ToString()
                     };
                     instanceList.Add(instance);
                 }

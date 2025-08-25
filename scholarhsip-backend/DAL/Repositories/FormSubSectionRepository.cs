@@ -17,7 +17,7 @@
 //            List<FormSubSection> subSectionList = new List<FormSubSection>();
 //            try
 //            {
-//                SqlDataReader dataReader = ExecuteReader("spGetAllFormSubSections", null);
+//                DataTable dataTable =  ExecuteQuery("spGetAllFormSubSections", null);
 //                while (dataReader.Read())
 //                {
 //                    FormSubSection subSection = new FormSubSection
@@ -48,7 +48,7 @@
 //            };
 //            try
 //            {
-//                SqlDataReader dataReader = ExecuteReader("spGetFormSubSectionById", paramDic);
+//                DataTable dataTable =  ExecuteQuery("spGetFormSubSectionById", paramDic);
 //                FormSubSection subSection = null;
 //                if (dataReader.Read())
 //                {
@@ -80,7 +80,7 @@
 //            List<FormSubSection> subSectionList = new List<FormSubSection>();
 //            try
 //            {
-//                SqlDataReader dataReader = ExecuteReader("spGetFormSubSectionsByFormId", paramDic);
+//                DataTable dataTable =  ExecuteQuery("spGetFormSubSectionsByFormId", paramDic);
 //                while (dataReader.Read())
 //                {
 //                    FormSubSection subSection = new FormSubSection
@@ -112,7 +112,7 @@
 //            List<FormSubSection> subSectionList = new List<FormSubSection>();
 //            try
 //            {
-//                SqlDataReader dataReader = ExecuteReader("spGetFormSubSectionsBySectionId", paramDic);
+//                DataTable dataTable =  ExecuteQuery("spGetFormSubSectionsBySectionId", paramDic);
 //                while (dataReader.Read())
 //                {
 //                    FormSubSection subSection = new FormSubSection

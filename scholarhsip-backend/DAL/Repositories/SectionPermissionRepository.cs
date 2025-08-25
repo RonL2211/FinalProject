@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace FinalProject.DAL.Repositories
@@ -23,18 +24,18 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetSectionPermissions", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetSectionPermissions", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     SectionPermission permission = new SectionPermission
                     {
-                        PermissionId = Convert.ToInt32(dataReader["PremisionId"]),
-                        SectionID = Convert.ToInt32(dataReader["SectionID"]),
-                        ResponsiblePerson = dataReader["ResponsiblePerson"].ToString(),
-                        CanView = Convert.ToBoolean(dataReader["CanView"]),
-                        CanEdit = Convert.ToBoolean(dataReader["CanEdit"]),
-                        CanEvaluate = Convert.ToBoolean(dataReader["CanEvaluate"])
+                        PermissionId = Convert.ToInt32(row["PremisionId"]),
+                        SectionID = Convert.ToInt32(row["SectionID"]),
+                        ResponsiblePerson = row["ResponsiblePerson"].ToString(),
+                        CanView = Convert.ToBoolean(row["CanView"]),
+                        CanEdit = Convert.ToBoolean(row["CanEdit"]),
+                        CanEvaluate = Convert.ToBoolean(row["CanEvaluate"])
                     };
                     permissionList.Add(permission);
                 }
@@ -56,19 +57,21 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetPermissionById", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetPermissionById", paramDic);
                 SectionPermission permission = null;
+                    DataRow row = dataTable.Rows[0];
 
-                if (dataReader.Read())
+                if (dataTable.Rows.Count > 0)
+                
                 {
                     permission = new SectionPermission
                     {
-                        PermissionId = Convert.ToInt32(dataReader["PremisionId"]),
-                        SectionID = Convert.ToInt32(dataReader["SectionID"]),
-                        ResponsiblePerson = dataReader["ResponsiblePerson"].ToString(),
-                        CanView = Convert.ToBoolean(dataReader["CanView"]),
-                        CanEdit = Convert.ToBoolean(dataReader["CanEdit"]),
-                        CanEvaluate = Convert.ToBoolean(dataReader["CanEvaluate"])
+                        PermissionId = Convert.ToInt32(row["PremisionId"]),
+                        SectionID = Convert.ToInt32(row["SectionID"]),
+                        ResponsiblePerson = row["ResponsiblePerson"].ToString(),
+                        CanView = Convert.ToBoolean(row["CanView"]),
+                        CanEdit = Convert.ToBoolean(row["CanEdit"]),
+                        CanEvaluate = Convert.ToBoolean(row["CanEvaluate"])
                     };
                 }
 

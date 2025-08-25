@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace FinalProject.DAL.Repositories
@@ -17,23 +18,23 @@ namespace FinalProject.DAL.Repositories
             List<Person> personList = new List<Person>();
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetAllPersons", null);
+                DataTable dataTable =  ExecuteQuery("spGetAllPersons", null);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     Person person = new Person
                     {
-                        PersonId = dataReader["PersonId"].ToString(),
-                        FirstName = dataReader["firstName"].ToString(),
-                        LastName = dataReader["lastName"].ToString(),
-                        Email = dataReader["email"].ToString(),
-                        DepartmentID = dataReader["DepartmentID"] != DBNull.Value ? Convert.ToInt32(dataReader["DepartmentID"]) : null,
-                        FolderPath = dataReader["folderPath"].ToString(),
-                        Username = dataReader["Username"].ToString(),
-                        Password = dataReader["password"].ToString(),
-                        Position = dataReader["Position"].ToString(),
-                        IsActive = Convert.ToBoolean(dataReader["IsActive"]),
-                        CreatedDate = dataReader["CreatedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["CreatedDate"]) : null
+                        PersonId = row["PersonId"].ToString(),
+                        FirstName = row["firstName"].ToString(),
+                        LastName = row["lastName"].ToString(),
+                        Email = row["email"].ToString(),
+                        DepartmentID = row["DepartmentID"] != DBNull.Value ? Convert.ToInt32(row["DepartmentID"]) : null,
+                        FolderPath = row["folderPath"].ToString(),
+                        Username = row["Username"].ToString(),
+                        Password = row["password"].ToString(),
+                        Position = row["Position"].ToString(),
+                        IsActive = Convert.ToBoolean(row["IsActive"]),
+                        CreatedDate = row["CreatedDate"] != DBNull.Value ? Convert.ToDateTime(row["CreatedDate"]) : null
                     };
                     personList.Add(person);
                 }
@@ -55,24 +56,24 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetPersonById", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetPersonById", paramDic);
                 Person person = null;
-
-                if (dataReader.Read())
+                DataRow row = dataTable.Rows[0];
+                if (dataTable.Rows.Count > 0)
                 {
                     person = new Person
                     {
-                        PersonId = dataReader["PersonId"].ToString(),
-                        FirstName = dataReader["firstName"].ToString(),
-                        LastName = dataReader["lastName"].ToString(),
-                        Email = dataReader["email"].ToString(),
-                        DepartmentID = dataReader["DepartmentID"] != DBNull.Value ? Convert.ToInt32(dataReader["DepartmentID"]) : null,
-                        FolderPath = dataReader["folderPath"].ToString(),
-                        Username = dataReader["Username"].ToString(),
-                        Password = dataReader["password"].ToString(),
-                        Position = dataReader["Position"].ToString(),
-                        IsActive = Convert.ToBoolean(dataReader["IsActive"]),
-                        CreatedDate = dataReader["CreatedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["CreatedDate"]) : null
+                        PersonId = row["PersonId"].ToString(),
+                        FirstName = row["firstName"].ToString(),
+                        LastName = row["lastName"].ToString(),
+                        Email = row["email"].ToString(),
+                        DepartmentID = row["DepartmentID"] != DBNull.Value ? Convert.ToInt32(row["DepartmentID"]) : null,
+                        FolderPath = row["folderPath"].ToString(),
+                        Username = row["Username"].ToString(),
+                        Password = row["password"].ToString(),
+                        Position = row["Position"].ToString(),
+                        IsActive = Convert.ToBoolean(row["IsActive"]),
+                        CreatedDate = row["CreatedDate"] != DBNull.Value ? Convert.ToDateTime(row["CreatedDate"]) : null
                     };
                 }
 
@@ -93,24 +94,24 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetPersonByUsername", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetPersonByUsername", paramDic);
                 Person person = null;
-
-                if (dataReader.Read())
+            DataRow row = dataTable.Rows[0];
+                if (dataTable.Rows.Count > 0)
                 {
                     person = new Person
                     {
-                        PersonId = dataReader["PersonId"].ToString(),
-                        FirstName = dataReader["firstName"].ToString(),
-                        LastName = dataReader["lastName"].ToString(),
-                        Email = dataReader["email"].ToString(),
-                        DepartmentID = dataReader["DepartmentID"] != DBNull.Value ? Convert.ToInt32(dataReader["DepartmentID"]) : null,
-                        FolderPath = dataReader["folderPath"].ToString(),
-                        Username = dataReader["Username"].ToString(),
-                        Password = dataReader["password"].ToString(),
-                        Position = dataReader["Position"].ToString(),
-                        IsActive = Convert.ToBoolean(dataReader["IsActive"]),
-                        CreatedDate = dataReader["CreatedDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["CreatedDate"]) : null
+                        PersonId = row["PersonId"].ToString(),
+                        FirstName = row["firstName"].ToString(),
+                        LastName = row["lastName"].ToString(),
+                        Email = row["email"].ToString(),
+                        DepartmentID = row["DepartmentID"] != DBNull.Value ? Convert.ToInt32(row["DepartmentID"]) : null,
+                        FolderPath = row["folderPath"].ToString(),
+                        Username = row["Username"].ToString(),
+                        Password = row["password"].ToString(),
+                        Position = row["Position"].ToString(),
+                        IsActive = Convert.ToBoolean(row["IsActive"]),
+                        CreatedDate = row["CreatedDate"] != DBNull.Value ? Convert.ToDateTime(row["CreatedDate"]) : null
                     };
                 }
 
@@ -187,15 +188,15 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetPersonRoles", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetPersonRoles", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     Role role = new Role
                     {
-                        RoleID = Convert.ToInt32(dataReader["RoleID"]),
-                        RoleName = dataReader["RoleName"].ToString(),
-                        Description = dataReader["Description"].ToString()
+                        RoleID = Convert.ToInt32(row["RoleID"]),
+                        RoleName = row["RoleName"].ToString(),
+                        Description = row["Description"].ToString()
                     };
                     roles.Add(role);
                 }

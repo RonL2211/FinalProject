@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace FinalProject.DAL.Repositories
@@ -23,26 +24,26 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetSectionsByFormId", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetSectionsByFormId", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     FormSection section = new FormSection
                     {
-                        SectionID = Convert.ToInt32(dataReader["SectionID"]),
-                        FormId = Convert.ToInt32(dataReader["formId"]),
-                        ParentSectionID = dataReader["ParentSectionID"] != DBNull.Value ? Convert.ToInt32(dataReader["ParentSectionID"]) : null,
-                        Level = Convert.ToByte(dataReader["Level"]),
-                        OrderIndex = Convert.ToInt32(dataReader["OrderIndex"]),
-                        Title = dataReader["Title"].ToString(),
-                        Description = dataReader["Description"].ToString(),
-                        Explanation = dataReader["Explanation"].ToString(),
-                        MaxPoints = dataReader["MaxPoints"] != DBNull.Value ? Convert.ToDecimal(dataReader["MaxPoints"]) : null,
-                        ResponsibleEntity = dataReader["ResponsibleEntity"] != DBNull.Value ? Convert.ToInt32(dataReader["ResponsibleEntity"]) : null,
-                        ResponsiblePerson = dataReader["ResponsiblePerson"]?.ToString(),
-                        IsRequired = Convert.ToBoolean(dataReader["IsRequired"]),
-                        IsVisible = Convert.ToBoolean(dataReader["IsVisible"]),
-                        MaxOccurrences = dataReader["MaxOccurrences"] != DBNull.Value ? Convert.ToInt32(dataReader["MaxOccurrences"]) : null
+                        SectionID = Convert.ToInt32(row["SectionID"]),
+                        FormId = Convert.ToInt32(row["formId"]),
+                        ParentSectionID = row["ParentSectionID"] != DBNull.Value ? Convert.ToInt32(row["ParentSectionID"]) : null,
+                        Level = Convert.ToByte(row["Level"]),
+                        OrderIndex = Convert.ToInt32(row["OrderIndex"]),
+                        Title = row["Title"].ToString(),
+                        Description = row["Description"].ToString(),
+                        Explanation = row["Explanation"].ToString(),
+                        MaxPoints = row["MaxPoints"] != DBNull.Value ? Convert.ToDecimal(row["MaxPoints"]) : null,
+                        ResponsibleEntity = row["ResponsibleEntity"] != DBNull.Value ? Convert.ToInt32(row["ResponsibleEntity"]) : null,
+                        ResponsiblePerson = row["ResponsiblePerson"]?.ToString(),
+                        IsRequired = Convert.ToBoolean(row["IsRequired"]),
+                        IsVisible = Convert.ToBoolean(row["IsVisible"]),
+                        MaxOccurrences = row["MaxOccurrences"] != DBNull.Value ? Convert.ToInt32(row["MaxOccurrences"]) : null
                     };
                     sectionList.Add(section);
                 }
@@ -64,27 +65,27 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetSectionById", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetSectionById", paramDic);
                 FormSection section = null;
-
-                if (dataReader.Read())
+            DataRow row = dataTable.Rows[0];
+                if (dataTable.Rows.Count > 0)
                 {
                     section = new FormSection
                     {
-                        SectionID = Convert.ToInt32(dataReader["SectionID"]),
-                        FormId = Convert.ToInt32(dataReader["formId"]),
-                        ParentSectionID = dataReader["ParentSectionID"] != DBNull.Value ? Convert.ToInt32(dataReader["ParentSectionID"]) : null,
-                        Level = Convert.ToByte(dataReader["Level"]),
-                        OrderIndex = Convert.ToInt32(dataReader["OrderIndex"]),
-                        Title = dataReader["Title"].ToString(),
-                        Description = dataReader["Description"].ToString(),
-                        Explanation = dataReader["Explanation"].ToString(),
-                        MaxPoints = dataReader["MaxPoints"] != DBNull.Value ? Convert.ToDecimal(dataReader["MaxPoints"]) : null,
-                        ResponsibleEntity = dataReader["ResponsibleEntity"] != DBNull.Value ? Convert.ToInt32(dataReader["ResponsibleEntity"]) : null,
-                        ResponsiblePerson = dataReader["ResponsiblePerson"]?.ToString(),
-                        IsRequired = Convert.ToBoolean(dataReader["IsRequired"]),
-                        IsVisible = Convert.ToBoolean(dataReader["IsVisible"]),
-                        MaxOccurrences = dataReader["MaxOccurrences"] != DBNull.Value ? Convert.ToInt32(dataReader["MaxOccurrences"]) : null
+                        SectionID = Convert.ToInt32(row["SectionID"]),
+                        FormId = Convert.ToInt32(row["formId"]),
+                        ParentSectionID = row["ParentSectionID"] != DBNull.Value ? Convert.ToInt32(row["ParentSectionID"]) : null,
+                        Level = Convert.ToByte(row["Level"]),
+                        OrderIndex = Convert.ToInt32(row["OrderIndex"]),
+                        Title = row["Title"].ToString(),
+                        Description = row["Description"].ToString(),
+                        Explanation = row["Explanation"].ToString(),
+                        MaxPoints = row["MaxPoints"] != DBNull.Value ? Convert.ToDecimal(row["MaxPoints"]) : null,
+                        ResponsibleEntity = row["ResponsibleEntity"] != DBNull.Value ? Convert.ToInt32(row["ResponsibleEntity"]) : null,
+                        ResponsiblePerson = row["ResponsiblePerson"]?.ToString(),
+                        IsRequired = Convert.ToBoolean(row["IsRequired"]),
+                        IsVisible = Convert.ToBoolean(row["IsVisible"]),
+                        MaxOccurrences = row["MaxOccurrences"] != DBNull.Value ? Convert.ToInt32(row["MaxOccurrences"]) : null
                     };
                 }
 
@@ -183,26 +184,26 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetChildSections", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetChildSections", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     FormSection section = new FormSection
                     {
-                        SectionID = Convert.ToInt32(dataReader["SectionID"]),
-                        FormId = Convert.ToInt32(dataReader["formId"]),
-                        ParentSectionID = dataReader["ParentSectionID"] != DBNull.Value ? Convert.ToInt32(dataReader["ParentSectionID"]) : null,
-                        Level = Convert.ToByte(dataReader["Level"]),
-                        OrderIndex = Convert.ToInt32(dataReader["OrderIndex"]),
-                        Title = dataReader["Title"].ToString(),
-                        Description = dataReader["Description"].ToString(),
-                        Explanation = dataReader["Explanation"].ToString(),
-                        MaxPoints = dataReader["MaxPoints"] != DBNull.Value ? Convert.ToDecimal(dataReader["MaxPoints"]) : null,
-                        ResponsibleEntity = dataReader["ResponsibleEntity"] != DBNull.Value ? Convert.ToInt32(dataReader["ResponsibleEntity"]) : null,
-                        ResponsiblePerson = dataReader["ResponsiblePerson"]?.ToString(),
-                        IsRequired = Convert.ToBoolean(dataReader["IsRequired"]),
-                        IsVisible = Convert.ToBoolean(dataReader["IsVisible"]),
-                        MaxOccurrences = dataReader["MaxOccurrences"] != DBNull.Value ? Convert.ToInt32(dataReader["MaxOccurrences"]) : null
+                        SectionID = Convert.ToInt32(row["SectionID"]),
+                        FormId = Convert.ToInt32(row["formId"]),
+                        ParentSectionID = row["ParentSectionID"] != DBNull.Value ? Convert.ToInt32(row["ParentSectionID"]) : null,
+                        Level = Convert.ToByte(row["Level"]),
+                        OrderIndex = Convert.ToInt32(row["OrderIndex"]),
+                        Title = row["Title"].ToString(),
+                        Description = row["Description"].ToString(),
+                        Explanation = row["Explanation"].ToString(),
+                        MaxPoints = row["MaxPoints"] != DBNull.Value ? Convert.ToDecimal(row["MaxPoints"]) : null,
+                        ResponsibleEntity = row["ResponsibleEntity"] != DBNull.Value ? Convert.ToInt32(row["ResponsibleEntity"]) : null,
+                        ResponsiblePerson = row["ResponsiblePerson"]?.ToString(),
+                        IsRequired = Convert.ToBoolean(row["IsRequired"]),
+                        IsVisible = Convert.ToBoolean(row["IsVisible"]),
+                        MaxOccurrences = row["MaxOccurrences"] != DBNull.Value ? Convert.ToInt32(row["MaxOccurrences"]) : null
                     };
                     sectionList.Add(section);
                 }

@@ -231,7 +231,7 @@ const AppRouter = () => {
            path="/view-submission/:instanceId"
             element={
               <ProtectedRoute
-              requiredRoles={[ "ראש התמחות", "ראש מחלקה", "דיקאן"]}>
+              requiredRoles={[ "מנהל סטודנטים","ראש התמחות", "ראש מחלקה", "דיקאן"]}>
                 <ViewSubmission />
               </ProtectedRoute>
             }

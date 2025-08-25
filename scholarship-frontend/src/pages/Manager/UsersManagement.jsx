@@ -375,7 +375,7 @@ const handleAddUser = () => {
           <Card className="text-center h-100 border-warning">
             <Card.Body>
               <i className="bi bi-person-gear text-warning" style={{ fontSize: '1.5rem' }}></i>
-              <h4 className="mt-1 mb-1 text-warning">{getUsersByRole('ראש מחלקה')}</h4>
+              <h4 className="mt-1 mb-1 text-warning">{getUsersByRole('ראש מחלקה') + getUsersByRole('ראש התמחות')}</h4>
               <small className="text-muted">ראשי מחלקות</small>
             </Card.Body>
           </Card>

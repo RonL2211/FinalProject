@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace FinalProject.DAL.Repositories
@@ -23,28 +24,28 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetFieldsBySectionId", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetFieldsBySectionId", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     SectionField field = new SectionField
                     {
-                        FieldID = Convert.ToInt32(dataReader["FieldID"]),
-                        SectionID = dataReader["SectionID"] != DBNull.Value ? Convert.ToInt32(dataReader["SectionID"]) : null,
-                        FieldName = dataReader["FieldName"].ToString(),
-                        FieldLabel = dataReader["FieldLabel"].ToString(),
-                        FieldType = dataReader["FieldType"].ToString(),
-                        IsRequired = Convert.ToBoolean(dataReader["IsRequired"]),
-                        DefaultValue = dataReader["DefaultValue"].ToString(),
-                        Placeholder = dataReader["Placeholder"].ToString(),
-                        HelpText = dataReader["HelpText"].ToString(),
-                        OrderIndex = Convert.ToInt32(dataReader["OrderIndex"]),
-                        IsVisible = Convert.ToBoolean(dataReader["IsVisible"]),
-                        MaxLength = dataReader["MaxLength"] != DBNull.Value ? Convert.ToInt32(dataReader["MaxLength"]) : null,
-                        MinValue = dataReader["MinValue"] != DBNull.Value ? Convert.ToDecimal(dataReader["MinValue"]) : null,
-                        MaxValue = dataReader["MaxValue"] != DBNull.Value ? Convert.ToDecimal(dataReader["MaxValue"]) : null,
-                        ScoreCalculationRule = dataReader["ScoreCalculationRule"].ToString(),
-                        IsActive = Convert.ToBoolean(dataReader["IsActive"])
+                        FieldID = Convert.ToInt32(row["FieldID"]),
+                        SectionID = row["SectionID"] != DBNull.Value ? Convert.ToInt32(row["SectionID"]) : null,
+                        FieldName = row["FieldName"].ToString(),
+                        FieldLabel = row["FieldLabel"].ToString(),
+                        FieldType = row["FieldType"].ToString(),
+                        IsRequired = Convert.ToBoolean(row["IsRequired"]),
+                        DefaultValue = row["DefaultValue"].ToString(),
+                        Placeholder = row["Placeholder"].ToString(),
+                        HelpText = row["HelpText"].ToString(),
+                        OrderIndex = Convert.ToInt32(row["OrderIndex"]),
+                        IsVisible = Convert.ToBoolean(row["IsVisible"]),
+                        MaxLength = row["MaxLength"] != DBNull.Value ? Convert.ToInt32(row["MaxLength"]) : null,
+                        MinValue = row["MinValue"] != DBNull.Value ? Convert.ToDecimal(row["MinValue"]) : null,
+                        MaxValue = row["MaxValue"] != DBNull.Value ? Convert.ToDecimal(row["MaxValue"]) : null,
+                        ScoreCalculationRule = row["ScoreCalculationRule"].ToString(),
+                        IsActive = Convert.ToBoolean(row["IsActive"])
                     };
                     fieldList.Add(field);
                 }
@@ -66,29 +67,31 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetFieldById", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetFieldById", paramDic);
                 SectionField field = null;
+                    DataRow row = dataTable.Rows[0];
 
-                if (dataReader.Read())
+                if (dataTable.Rows.Count > 0)
+                
                 {
                     field = new SectionField
                     {
-                        FieldID = Convert.ToInt32(dataReader["FieldID"]),
-                        SectionID = dataReader["SectionID"] != DBNull.Value ? Convert.ToInt32(dataReader["SectionID"]) : null,
-                        FieldName = dataReader["FieldName"].ToString(),
-                        FieldLabel = dataReader["FieldLabel"].ToString(),
-                        FieldType = dataReader["FieldType"].ToString(),
-                        IsRequired = Convert.ToBoolean(dataReader["IsRequired"]),
-                        DefaultValue = dataReader["DefaultValue"].ToString(),
-                        Placeholder = dataReader["Placeholder"].ToString(),
-                        HelpText = dataReader["HelpText"].ToString(),
-                        OrderIndex = Convert.ToInt32(dataReader["OrderIndex"]),
-                        IsVisible = Convert.ToBoolean(dataReader["IsVisible"]),
-                        MaxLength = dataReader["MaxLength"] != DBNull.Value ? Convert.ToInt32(dataReader["MaxLength"]) : null,
-                        MinValue = dataReader["MinValue"] != DBNull.Value ? Convert.ToDecimal(dataReader["MinValue"]) : null,
-                        MaxValue = dataReader["MaxValue"] != DBNull.Value ? Convert.ToDecimal(dataReader["MaxValue"]) : null,
-                        ScoreCalculationRule = dataReader["ScoreCalculationRule"].ToString(),
-                        IsActive = Convert.ToBoolean(dataReader["IsActive"])
+                        FieldID = Convert.ToInt32(row["FieldID"]),
+                        SectionID = row["SectionID"] != DBNull.Value ? Convert.ToInt32(row["SectionID"]) : null,
+                        FieldName = row["FieldName"].ToString(),
+                        FieldLabel = row["FieldLabel"].ToString(),
+                        FieldType = row["FieldType"].ToString(),
+                        IsRequired = Convert.ToBoolean(row["IsRequired"]),
+                        DefaultValue = row["DefaultValue"].ToString(),
+                        Placeholder = row["Placeholder"].ToString(),
+                        HelpText = row["HelpText"].ToString(),
+                        OrderIndex = Convert.ToInt32(row["OrderIndex"]),
+                        IsVisible = Convert.ToBoolean(row["IsVisible"]),
+                        MaxLength = row["MaxLength"] != DBNull.Value ? Convert.ToInt32(row["MaxLength"]) : null,
+                        MinValue = row["MinValue"] != DBNull.Value ? Convert.ToDecimal(row["MinValue"]) : null,
+                        MaxValue = row["MaxValue"] != DBNull.Value ? Convert.ToDecimal(row["MaxValue"]) : null,
+                        ScoreCalculationRule = row["ScoreCalculationRule"].ToString(),
+                        IsActive = Convert.ToBoolean(row["IsActive"])
                     };
                 }
 
@@ -193,19 +196,19 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetFieldOptions", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetFieldOptions", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     FieldOption option = new FieldOption
                     {
-                        OptionID = Convert.ToInt32(dataReader["OptionID"]),
-                        FieldID = Convert.ToInt32(dataReader["FieldID"]),
-                        OptionValue = dataReader["OptionValue"].ToString(),
-                        OptionLabel = dataReader["OptionLabel"].ToString(),
-                        ScoreValue = dataReader["ScoreValue"] != DBNull.Value ? Convert.ToDecimal(dataReader["ScoreValue"]) : null,
-                        OrderIndex = Convert.ToInt32(dataReader["OrderIndex"]),
-                        IsDefault = Convert.ToBoolean(dataReader["IsDefault"])
+                        OptionID = Convert.ToInt32(row["OptionID"]),
+                        FieldID = Convert.ToInt32(row["FieldID"]),
+                        OptionValue = row["OptionValue"].ToString(),
+                        OptionLabel = row["OptionLabel"].ToString(),
+                        ScoreValue = row["ScoreValue"] != DBNull.Value ? Convert.ToDecimal(row["ScoreValue"]) : null,
+                        OrderIndex = Convert.ToInt32(row["OrderIndex"]),
+                        IsDefault = Convert.ToBoolean(row["IsDefault"])
                     };
                     optionList.Add(option);
                 }
@@ -272,20 +275,21 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetFieldOptionById", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetFieldOptionById", paramDic);
                 FieldOption option = null;
+                    DataRow row = dataTable.Rows[0];
 
-                if (dataReader.Read())
+                if (dataTable.Rows.Count > 0)
                 {
                     option = new FieldOption
                     {
-                        OptionID = Convert.ToInt32(dataReader["OptionID"]),
-                        FieldID = Convert.ToInt32(dataReader["FieldID"]),
-                        OptionValue = dataReader["OptionValue"].ToString(),
-                        OptionLabel = dataReader["OptionLabel"].ToString(),
-                        ScoreValue = dataReader["ScoreValue"] != DBNull.Value ? Convert.ToDecimal(dataReader["ScoreValue"]) : null,
-                        OrderIndex = Convert.ToInt32(dataReader["OrderIndex"]),
-                        IsDefault = Convert.ToBoolean(dataReader["IsDefault"])
+                        OptionID = Convert.ToInt32(row["OptionID"]),
+                        FieldID = Convert.ToInt32(row["FieldID"]),
+                        OptionValue = row["OptionValue"].ToString(),
+                        OptionLabel = row["OptionLabel"].ToString(),
+                        ScoreValue = row["ScoreValue"] != DBNull.Value ? Convert.ToDecimal(row["ScoreValue"]) : null,
+                        OrderIndex = Convert.ToInt32(row["OrderIndex"]),
+                        IsDefault = Convert.ToBoolean(row["IsDefault"])
                     };
                 }
 

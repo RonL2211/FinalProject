@@ -8,6 +8,9 @@ import { instanceService } from '../../services/instanceService';
 import Swal from 'sweetalert2';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorAlert from '../../components/UI/ErrorAlert';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+
 
 const UnifiedFormBuilder = ({ mode = 'create' }) => {
   const { id: formId } = useParams();
@@ -1124,18 +1127,20 @@ const UnifiedFormBuilder = ({ mode = 'create' }) => {
                           <option value="A">סמסטר א'</option>
                           <option value="B">סמסטר ב'</option>
                           <option value="C">סמסטר קיץ</option>
+                          <option value="D">שנתי</option>
                         </Form.Select>
                       </Form.Group>
                     </Col>
                     <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>תאריך יעד</Form.Label>
-                        <Form.Control
-                          type="date"
-                          value={formInfo.dueDate || ''}
-                          onChange={(e) => setFormInfo({...formInfo, dueDate: e.target.value})}
-                        />
-                      </Form.Group>
+                       <Form.Group className="mb-3">
+      <Form.Label>תאריך יעד</Form.Label>
+      <DatePicker
+        selected={formInfo.dueDate || ''}
+onChange={(date) => setFormInfo({...formInfo, dueDate: date})}
+        dateFormat="yyyy-MM-dd"
+        className="form-control" // שומר על סטייל של Bootstrap
+      />
+    </Form.Group>
                     </Col>
                   </Row>
 

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace FinalProject.DAL.Repositories
@@ -17,15 +18,16 @@ namespace FinalProject.DAL.Repositories
             List<Department> departmentList = new List<Department>();
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetAllDepartments", null);
+                DataTable dataTable =  ExecuteQuery("spGetAllDepartments", null);
+                
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows) 
                 {
                     Department department = new Department
                     {
-                        DepartmentID = Convert.ToInt32(dataReader["DepartmentID"]),
-                        DepartmentName = dataReader["DepartmentName"].ToString(),
-                        FacultyId = dataReader["FacultyId"] != DBNull.Value ? Convert.ToInt32(dataReader["FacultyId"]) : null
+                        DepartmentID = Convert.ToInt32(row["DepartmentID"]),
+                        DepartmentName = row["DepartmentName"].ToString(),
+                        FacultyId = row["FacultyId"] != DBNull.Value ? Convert.ToInt32(row["FacultyId"]) : null
                     };
                     departmentList.Add(department);
                 }
@@ -47,16 +49,18 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetDepartmentById", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetDepartmentById", paramDic);
                 Department department = null;
 
-                if (dataReader.Read())
+                DataRow row = dataTable.Rows[0];    
+
+                if (dataTable.Rows.Count > 0)
                 {
                     department = new Department
                     {
-                        DepartmentID = Convert.ToInt32(dataReader["DepartmentID"]),
-                        DepartmentName = dataReader["DepartmentName"].ToString(),
-                        FacultyId = dataReader["FacultyId"] != DBNull.Value ? Convert.ToInt32(dataReader["FacultyId"]) : null
+                        DepartmentID = Convert.ToInt32(row["DepartmentID"]),
+                        DepartmentName = row["DepartmentName"].ToString(),
+                        FacultyId = row["FacultyId"] != DBNull.Value ? Convert.ToInt32(row["FacultyId"]) : null
                     };
                 }
 
@@ -79,15 +83,15 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetDepartmentsByFacultyId", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetDepartmentsByFacultyId", paramDic);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows) 
                 {
                     Department department = new Department
                     {
-                        DepartmentID = Convert.ToInt32(dataReader["DepartmentID"]),
-                        DepartmentName = dataReader["DepartmentName"].ToString(),
-                        FacultyId = dataReader["FacultyId"] != DBNull.Value ? Convert.ToInt32(dataReader["FacultyId"]) : null
+                        DepartmentID = Convert.ToInt32(row["DepartmentID"]),
+                        DepartmentName = row["DepartmentName"].ToString(),
+                        FacultyId = row["FacultyId"] != DBNull.Value ? Convert.ToInt32(row["FacultyId"]) : null
                     };
                     departmentList.Add(department);
                 }
@@ -105,14 +109,14 @@ namespace FinalProject.DAL.Repositories
             List<Faculty> facultyList = new List<Faculty>();
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetAllFaculties", null);
+                DataTable dataTable =  ExecuteQuery("spGetAllFaculties", null);
 
-                while (dataReader.Read())
+                foreach (DataRow row in dataTable.Rows)
                 {
                     Faculty faculty = new Faculty
                     {
-                        FacultyID = Convert.ToInt32(dataReader["FacultyID"]),
-                        FacultyName = dataReader["FacultyName"].ToString()
+                        FacultyID = Convert.ToInt32(row["FacultyID"]),
+                        FacultyName = row["FacultyName"].ToString()
                     };
                     facultyList.Add(faculty);
                 }
@@ -134,15 +138,17 @@ namespace FinalProject.DAL.Repositories
 
             try
             {
-                SqlDataReader dataReader = ExecuteReader("spGetFacultyById", paramDic);
+                DataTable dataTable =  ExecuteQuery("spGetFacultyById", paramDic);
                 Faculty faculty = null;
 
-                if (dataReader.Read())
+                DataRow row = dataTable.Rows[0];
+
+                if (dataTable.Rows.Count > 0)
                 {
                     faculty = new Faculty
                     {
-                        FacultyID = Convert.ToInt32(dataReader["FacultyID"]),
-                        FacultyName = dataReader["FacultyName"].ToString()
+                        FacultyID = Convert.ToInt32(row["FacultyID"]),
+                        FacultyName = row["FacultyName"].ToString()
                     };
                 }
 
